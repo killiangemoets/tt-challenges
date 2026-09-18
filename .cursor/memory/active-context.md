@@ -2,7 +2,7 @@
 
 ## Current focus
 
-- Runnable scaffold complete: root npm workspaces; Dockerized React/Vite frontend, Fastify API (`/health`, `/api-docs.html`), and idle worker plus db/MinIO/ElasticMQ. `make up` starts all six. Schema **draft** in `DATABASE_SCHEMA.md`; feature routes and resource initialization are not built. **Locked:** one `documents` table, `source` uploaded|generated. **Open:** orgs table vs enum; citation FKs vs jsonb. No Prisma schema until those.
+- Schema **draft** in `DATABASE_SCHEMA.md`; feature routes and resource initialization are not built. **Locked:** one `documents` table, `source` uploaded|generated; Claude Design extras (`size_bytes`, `chunks.heading`, multi-portco chat retrieve). **Open:** orgs table vs enum; citation FKs vs jsonb. No Prisma schema until those.
 
 ## Recent decisions
 
@@ -14,7 +14,7 @@
 - 2026-09-18: `STACK.md` aligned to SPEC — Fastify (not Hono), Prisma, Vite CSR kit, Anthropic official SDK, no LangChain/LangGraph, `@xenova/transformers` ingest + retrieve. `/api-docs.html`.
 - 2026-09-18: Repo layout documented in `REPO_ARCHITECTURE.md` (candidate tree: `apps/backend` + `apps/frontend`). Backend tests: `apps/backend/test/`.
 - 2026-09-18: Bootstrap runtime uses root npm workspaces + Node 22 Docker images. `make up` starts six services with hot reload; typecheck/lint/build and 2 API bootstrap tests pass.
-- 2026-09-18: MinIO image moved from unavailable Docker Hub `minio/minio` to official `quay.io/minio/minio`.
+- 2026-09-18: Bound `API_SPECS.md` + `DATABASE_SCHEMA.md` to Claude Design: multi-portco chat retrieve; citation markers; batch retry; `q`; `sizeBytes`/`chunkCount`; chunk heading/neighbors. Candidate: "do so".
 
 ## Open questions (candidate — not agent-filled)
 

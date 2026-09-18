@@ -32,17 +32,17 @@ Typical portco docs: VCP, scorecards, board decks, org DD, leadership assessment
 - **Object storage (MinIO):** raw files.
 - **Queue (ElasticMQ):** async ingest workers — not all-inline (pillar point).
 - **Postgres + pgvector:** chunks, embeddings, metadata, generated artifacts.
-- **API (Fastify + Prisma):** app surface; **UI (Vite React SPA, TanStack Query, shadcn/Radix).** HTTP + ingest worker: `API_SPECS.md` (`/api/v1`, queue `ingest`). Docs at `/api-docs.html`.
+- **API (Fastify + Prisma):** app surface; **UI (Vite React SPA, TanStack Query, shadcn/Radix).** HTTP + ingest worker: `API_SPECS.md` (`/api/v1`, queue `ingest`, batch retry, chat `portcoOrganizationIds`, citation markers). Docs at `/api-docs.html`.
 - **Anthropic:** official SDK in the API (no LangChain/LangGraph). Local `@xenova/transformers` for embeddings.
 - Only external network: Anthropic API.
 
 ## Data flow (expected)
 
 1. **Ingest Seeds** or **Add file** → **MinIO object + `documents` row** → ElasticMQ → worker: extract text → chunk → embed → insert chunks; status on the document row. Failed: UI error + Retry (no DLQ). `data/` is the seed *source*, not the runtime store.
-2. Chat: `@xenova/transformers` query embed → retrieve `fund` always, plus selected portco if any (none = fund only) → Anthropic (history + passages); stream SSE API→UI; citations to real passages; silence → “I don’t know”.
+2. Chat: `@xenova/transformers` query embed → retrieve `fund` always ∪ 0–3 selected portcos (empty = fund only) → Anthropic (history + passages); stream SSE API→UI; citations with `marker` after the turn; silence → “I don’t know”. Generate retrieve is still one portco ∪ fund.
 3. From chat: generate **portco brief** from `templates/portco-brief.md` → MinIO + `documents` row `source=generated` (same table; UI list split) → memo UI with citations/flags. Re-ingest into retriever is cut for now.
 4. Dashboard (Sam): needs-me + pipeline/KB + generated list. Single-doc failure must not kill the pipeline. Non-`.md` rejected at API and UI.
 
 ## Decisions
 
-- Processes: SPA + API + ingest worker (queue). Schema draft: one `documents` table (`source` uploaded|generated). See `DATABASE_SCHEMA.md`.
+- Processes: SPA + API + ingest worker (queue). Schema draft: one `documents` table (`source` uploaded|generated); `size_bytes`; `chunks.heading`. See `DATABASE_SCHEMA.md`.

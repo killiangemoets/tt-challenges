@@ -8,7 +8,7 @@ Locked product rules this draft follows:
 - **One `documents` table.** Discriminator `source`: `uploaded` | `generated`. UI still lists them separately.
 - Ingest (`source = uploaded`): MinIO object + `documents` row → queue → worker inserts **chunks**. Status: `queued | processing | ready | failed`.
 - Generate (`source = generated`): MinIO + same table, `status = ready`. **No chunks** (re-ingest into the retriever is cut).
-- Retrieve in SQL: uploaded + ready only; fund always eligible; optional one portco; never PC→PC.
+- Retrieve in SQL: uploaded + ready only; fund always eligible. **Chat:** fund ∪ 0–3 selected portcos (fund-side user; this slice has no auth). **Generate:** exactly one portco ∪ fund.
 - No users table (Dana does not log in). Chat history is request-scoped, not persisted.
 
 ## ER
@@ -38,7 +38,7 @@ Four seed rows. Not created from the UI in this slice.
 | `name`       | text        | e.g. DAW Capital, Vantage Managed Services                      |
 | `created_at` | timestamptz |                                                                 |
 
-`kind = fund` is the row always included in retrieve. A chat scope is `WHERE chunks.organization_id IN (fund_id [, selected_portco_id])`.
+`kind = fund` is the row always included in retrieve. Chat scope: `WHERE chunks.organization_id = ANY(fund_id ∪ selected_portco_ids)` with `selected_portco_ids` length 0–3. Generate scope: `fund_id ∪ { that_portco_id }`.
 
 ### `documents`
 
@@ -54,6 +54,7 @@ Uploads, seeds, and generated briefs.
 | `filename`                  | text                    | Display name (`.md` only)                                                            |
 | `title`                     | text NULL               | Generated memo title; NULL for uploads                                               |
 | `storage_key`               | text UNIQUE             | MinIO object key                                                                     |
+| `size_bytes`                | int NULL                | Object size; API writes on PutObject (upload, seeds, generated)                      |
 | `seed_path`                 | text NULL               | Relative path under `data/` for seeds; NULL otherwise                                |
 | `error_message`             | text NULL               | Visible on dashboard / Retry (uploaded ingest)                                       |
 | `attempt_count`             | int                     | Retry increments; no DLQ                                                             |
@@ -71,6 +72,7 @@ Constraints:
 - Worker deletes existing `chunks` for this id before re-insert on Retry.
 - Worker / enqueue only for `source = uploaded`.
 - Chunks exist only for `source = uploaded` AND `status = ready`.
+- `chunkCount` on API list/detail is `COUNT(chunks)` by `document_id`, not a stored column. Ready with zero chunks is a bug (worker fails ingest as empty).
 
 Dashboard: **Needs me** = `source = uploaded` AND `status = failed` (optionally stuck `processing`). **Pipeline / KB** = `source = uploaded`. **Generated** = `source = generated`.
 
@@ -85,6 +87,7 @@ Only for **ready uploaded** documents. Generated markdown is not chunked.
 | `organization_id` | uuid FK → organizations               | **Copied from the parent document** so retrieve filters chunks without a join guess |
 | `index`           | int                                   | Order inside the file (`0…n`)                                                       |
 | `content`         | text                                  | Passage shown in citations                                                          |
+| `heading`         | text NULL                             | Nearest preceding ATX heading from the chunker hard boundary; written at ingest     |
 | `embedding`       | vector(384)                           | Dimension = xenova model (draft: MiniLM-L6-v2). Change with the model, not per row  |
 | `created_at`      | timestamptz                           |                                                                                     |
 
@@ -92,7 +95,7 @@ Indexes: `(document_id, index)` unique; `(organization_id)` for scope; vector in
 
 ### `generated_citations`
 
-Structured evidence for a **generated** `documents` row. Chat citations are **not** stored here (end-of-turn SSE only).
+Structured evidence for a **generated** `documents` row. Chat citations are **not** stored here (end-of-turn SSE with `marker` only).
 
 | Column        | Type                                  | Notes                                |
 | ------------- | ------------------------------------- | ------------------------------------ |
@@ -117,7 +120,7 @@ Structured evidence for a **generated** `documents` row. Chat citations are **no
 
 ```
 fund_id := organizations.slug = 'fund'
-scope  := { fund_id } ∪ { selected pc id if any }
+scope  := { fund_id } ∪ selected_portco_ids   -- chat: 0–3 portcos; generate: exactly one
 
 SELECT chunks.* FROM chunks
 JOIN documents ON documents.id = chunks.document_id
@@ -128,7 +131,7 @@ ORDER BY embedding <=> $query_vector
 LIMIT k
 ```
 
-`scope` never contains two portcos. Generated rows never appear in this query.
+Generated rows never appear in this query. Neighbor context for a citation drawer is `index ± 1` on the same `document_id`, not extra stored columns.
 
 ---
 
@@ -142,3 +145,5 @@ Still open:
 2. **`generated_citations` → `chunks`** vs stuffing cites into jsonb on the brief — draft uses FKs so Dana’s evidence is a real passage id.
 
 Also fine to change: embedding dimension once we pick the xenova model; whether `source_document_ids` stays an array or a join table.
+
+Locked with the Claude Design prototype (`claude-design/`): `chunks.heading`, `documents.size_bytes`, chat retrieve across multiple portcos, citation `marker` on the wire (not a DB column — chat cites are SSE-only).

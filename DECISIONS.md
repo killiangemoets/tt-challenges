@@ -81,6 +81,12 @@ One block per significant decision (the checkpoint ones at minimum — use case,
 - **What I gave up:** Exclusive Fund\|PC dropdown; searching all portcos at once; a second embedding API at query time.
 - **In your own words (typed by you, not your agent):**
 
+### Decision: Claude Design contract (retrieve + API/schema)
+- **The call:** Bind `API_SPECS.md` and `DATABASE_SCHEMA.md` to the Claude Design prototype. Chat retrieve = fund ∪ 0–3 portcos (fund-side user). Generate still one portco ∪ fund. Adopt all prototype additions: citation `marker`, chunk `heading` + neighbor context, documents `q`, `sizeBytes`/`chunkCount`, batch `POST /documents/retry`.
+- **Said at the time:** "Yes — fund-side users need cross-portfolio questions (Recommended)" / "Adopt all additions from API_SPECS_V2 (Recommended)" / "do so"
+- **What I gave up:** The earlier “never two portcos” chat arity; a smaller API that could not drive the prototype screens.
+- **In your own words (typed by you, not your agent):**
+
 ### Decision: converse API (STACK AI layer)
 - **The call:** **H** — official Anthropic SDK. Retrieve → `messages.stream`. No LangChain/LangGraph. HTTP is **Fastify** (Hono reversed — see app libraries).
 - **Said at the time:** "yes I agree, fo with H"
@@ -148,18 +154,18 @@ One block per significant decision (the checkpoint ones at minimum — use case,
 - 2026-09-18 — *pipeline:* MinIO + `documents` row (uploads and seeds), then queue; extract → chunk → embed → insert; Retry not DLQ. "uploaded files (and seeds when we trigger seeds ingestions) should end up in a minio bucket + a line in document table"
 - 2026-09-18 — *embeddings:* local `@xenova/transformers` for ingest **and** chat retrieve. "ok yes let's use  @xenova/transformers for embedding" / "we will also use @xenova/transformers  for retrieving ofc"
 - 2026-09-18 — *converse:* grounded + citations; never invent; multi-turn to Anthropic; SSE API→FE. "YES, we should keep the context and send it to Anthropic."
-- 2026-09-18 — *retrieval scope:* B — optional PC1/PC2/PC3; fund always in (and shown); none = fund only. "UI should make it clear that fund is always included."
+- 2026-09-18 — *retrieval scope:* chat = fund ∪ 0–3 portcos (fund-side). Generate still one portco ∪ fund. "Yes — fund-side users need cross-portfolio questions (Recommended)" / "do so"
+- 2026-09-18 — *HTTP + worker contract:* `API_SPECS.md` matches Claude Design — markers, batch retry, `q`, `sizeBytes`/`chunkCount`, chunk neighbors/`heading`, `portcoOrganizationIds`. "Adopt all additions from API_SPECS_V2 (Recommended)" / "do so"
+- 2026-09-18 — *data model (draft):* `DATABASE_SCHEMA.md` — `organizations` + `documents` (`source`, `size_bytes`) + `chunks` (`heading`) + `generated_citations`. Open: orgs table vs enum; citation FKs vs jsonb.
 - 2026-09-18 — *AI layer:* H — Anthropic SDK only, no LangChain/LangGraph. "yes I agree, fo with H"
 - 2026-09-18 — *stack rails:* Fastify (not Hono) + Prisma + zod; Vite React CSR (shadcn/Radix, RHF, TanStack Query, axios, Tailwind, react-router-dom); `/api-docs.html`. Anthropic SDK + `@xenova/transformers`. "fastify (not Hono)" / "Everything client side rendering!"
 - 2026-09-18 — *generate format:* markdown from `templates/portco-brief.md` for Dana. "It should generate a  portco brief think for Dana! From a template .md"
 - 2026-09-18 — *uploaded vs generated:* one `documents` table, `source` uploaded\|generated; UI still split. "I don't want \"documents\" and \"generated_documents\" to be in 2 different tables, I want only one \"documents\" table with a type/source uploaded/generated"
-- 2026-09-18 — *data model (draft):* `DATABASE_SCHEMA.md` — `organizations` + `documents` (`source`) + `chunks` + `generated_citations`. Open: orgs table vs enum; citation FKs vs jsonb.
 - 2026-09-18 — *trust surface:* citations, metadata, flags, next steps. "evidence/citations per claim, metadata (who/what/when/from-which-sources), flags or alerts"
-- 2026-09-18 — *LLM prompts:* versioned in repo (`llm-prompts/v1/`), not in `prompts/` transcripts. "Let's store it in the codebase for now with versioning."
+- 2026-09-18 — *LLM prompts:* versioned in repo (`llm-prompts/v2/chat.md` for markers; generate still `v1/portco-brief.md`), not in `prompts/` transcripts. "Let's store it in the codebase for now with versioning."
 - 2026-09-18 — *stream UX:* Anthropic SSE → API → FE typing effect; citations at end of turn. "nice typing effect to write response nicely when streaming"
 - 2026-09-18 — *dashboard:* Sam’s morning (**S**). "S"
 - 2026-09-18 — *process topology:* React FE + Fastify API + ingest **worker** behind ElasticMQ + pgvector + MinIO. Documented in `ARCHITECTURE.md`. "We will have a FE in React, an API, a worker for document ingestion behind an ElasticMQ, a pgvector, a minio."
-- 2026-09-18 — *HTTP + worker contract:* `API_SPECS.md` — `/api/v1` routes, SSE shapes, and ingest worker (queue `ingest`, `{ documentId }`, status machine, chunk/embed). "write a file API_SPECS.md with all the api route we will need to build" / "API_SPECS should also contains the SPECS for the ingestion worker"
 - 2026-09-18 — *repo layout:* one git monorepo; `apps/backend` (`api` + `worker` + `common`) and `apps/frontend`; LLM prompts stay in `llm-prompts/v1/`, not `src/prompts/`. Documented in `REPO_ARCHITECTURE.md`. "apps/backend/ src/ api/ worker/ common/ schemas/ database/ helpers/ services/ prompts/" / "apps/frontend/ src/ components/ constants/ hooks/ data/ ui/ pages/ schemas/ helpers/"
 - 2026-09-18 — *backend tests:* `apps/backend/test/` sibling of `src/` (`api` / `worker` / `common`). "an important part is missing in the backend architecture, the /test folder."
 - 2026-09-18 — *bootstrap runtime:* npm workspaces + six Docker services behind `make up`; health/readiness only, no schema/bucket/queue/features. "Root npm workspaces for frontend/backend (Recommended)" / "Start apps + backing services; API/worker health checks only (Recommended)"

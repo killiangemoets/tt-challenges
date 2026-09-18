@@ -16,7 +16,7 @@ Source of truth for customer/product narrative: `context-brain/` (read those fil
 - Generated doc **saved into KB** as a **separate kind** from uploads (DB + UI). Re-ingest loop is *could* / cut for now. Template: `templates/portco-brief.md`.
 - **Never auto hire/no-hire.** Product = judgment support + audit trail, not a verdict machine.
 - Isolation: customers’ #1 gate; provenance must be representable even if ACL is *could*. Uploads set org via dropdown (fund / PC1 / PC2 / PC3); seeds stamp org from `data/` path.
-- Grounding invariant: every claim traces to a real passage; uncited ≠ cited; gaps stated. Chat: retrieve then generate; **stream answer tokens** (typing); **citations at end of turn**. Versioned prompts in `llm-prompts/v1/`. Send prior turns to Anthropic. Retrieve with `@xenova/transformers`. Scope: optional PC1/PC2/PC3 ∪ **fund**; no portco = fund only. No PC→PC. Enforce in SQL.
+- Grounding invariant: every claim traces to a real passage; uncited ≠ cited; gaps stated. Chat: retrieve then generate; **stream answer tokens** (typing); **citations at end of turn** with `marker` matching `[n]`. Versioned prompts in `llm-prompts/v2/chat.md` (chat) and `llm-prompts/v1/portco-brief.md` (generate). Send prior turns to Anthropic. Retrieve with `@xenova/transformers`. Chat scope: 0–3 portcos ∪ **fund** (SQL); no portco = fund only. Generate: exactly one portco ∪ fund. This slice has no auth — fund-side user may retrieve across portcos.
 - Talent review / IC: uneven evidence must not look uniform; flags (e.g. single independent reference) are product, not decoration.
 
 ## Workflows (JTBD)
@@ -28,7 +28,7 @@ Source of truth for customer/product narrative: `context-brain/` (read those fil
 
 - Bad file: fail that document, show status, keep pipeline up. Retry re-enqueues; no DLQ. Non-`.md` rejected FE+BE. Office under `inbox/office/` not parsed.
 - Corpus silent: refuse to invent.
-- Cross-portco bleed: schema should make isolation thinkable.
+- Cross-portco bleed: schema still stamps org on every chunk. Chat may retrieve several portcos for the fund-side user; generate never mixes two portcos in one brief.
 - Merge/identity of people across docs: silent failure mode if ignored.
 
 ## Terminology
