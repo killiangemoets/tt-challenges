@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "hooks": {
+    "stop": [
+      {
+        "command": "scripts/export-transcript.sh",
+        "timeout": 30
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": "scripts/export-transcript.sh",
+        "timeout": 30
+      }
+    ]
+  }
+}

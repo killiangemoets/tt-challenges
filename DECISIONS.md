@@ -13,9 +13,15 @@ make up
 # then …
 ```
 
+<!-- agent-reminders:run -->
+<!-- /agent-reminders:run -->
+
 ## The use case I chose
 
 Which document your brain generates (profile / comparison / brief / other), and why — who is it for, what decision does it support? (This is where reading [context-brain/](context-brain/) shows.)
+
+<!-- agent-reminders:use-case -->
+<!-- /agent-reminders:use-case -->
 
 ## Decisions & trade-offs
 
@@ -29,10 +35,19 @@ One block per significant decision (the checkpoint ones at minimum — use case,
 - **In your own words (typed by you, not your agent):** why this was right
 ```
 
+<!-- agent-reminders:decisions -->
+<!-- /agent-reminders:decisions -->
+
 ## What I cut
 
 The parts of [SPEC.md](SPEC.md) you deliberately didn't build, and why those were the right cuts for a 2–3 hour slice. Cuts recorded here are graded as product decisions; things silently missing are graded as gaps.
 
+<!-- agent-reminders:cuts -->
+<!-- /agent-reminders:cuts -->
+
 ## If I had another day
 
 Two or three sentences: what you'd build next, harden, or test — and the first thing you'd ship.
+
+<!-- agent-reminders:another-day -->
+<!-- /agent-reminders:another-day -->

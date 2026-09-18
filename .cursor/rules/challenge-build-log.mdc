@@ -1,0 +1,37 @@
+---
+description: Keep DECISIONS.md reminder lines and PROMPTS.md Did-with-it notes current during the take-home
+alwaysApply: true
+---
+
+# Challenge build log
+
+`DECISIONS.md` and `PROMPTS.md` are the candidate logs. Raw transcripts in `prompts/` are the source of truth. A stop hook copies transcripts and regenerates the auto-index in `PROMPTS.md`.
+
+## DECISIONS.md — same turn as the call
+
+When the candidate makes (or changes) a **use case, cut, trade-off, data-model, pipeline, grounding, trust-surface, or run-steps** call, append **1–2 short reminder bullets** in the matching section inside the `<!-- agent-reminders:* -->` markers. Do this in the same turn — do not wait for them to ask.
+
+Format:
+
+- `- YYYY-MM-DD — *topic:* what was chosen. Quote them if they spoke ("…"). Expand later in your own words.`
+
+Map:
+
+| Call | Section markers |
+|------|-----------------|
+| Generated doc / reader / decision | `agent-reminders:use-case` |
+| Checkpoint or other trade-off | `agent-reminders:decisions` |
+| Spec *must/should/could* we are not building | `agent-reminders:cuts` |
+| Next / harden / skip | `agent-reminders:another-day` |
+| How to boot the slice | `agent-reminders:run` (also update the fenced steps if they gave exact commands) |
+
+Rules:
+
+- Reminders only. Do **not** write **In your own words**.
+- Do **not** invent or polish rationale. If they answered a checkpoint, the reminder must include their words in quotation marks.
+- Upsert: if a reminder for the same topic exists, replace that bullet; do not duplicate.
+- Do not delete their prose outside the reminder markers.
+
+## PROMPTS.md
+
+Do not hand-rebuild the auto-index (hook + `scripts/index-prompts.py`). If they say they took / rejected / redirected a session’s output, update **only** that entry’s `**Did with it:**` line (drop the `_(auto)_` prefix). Leave **Asked** / **Got** to the indexer.

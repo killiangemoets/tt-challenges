@@ -1,29 +1,19 @@
 #!/usr/bin/env bash
-# Auto-export the current Claude Code session transcript into prompts/.
+# Auto-export the current agent session transcript into prompts/, then
+# refresh the auto-index in PROMPTS.md (scripts/index-prompts.py).
 #
-# Wired as a Stop + SessionEnd hook in .claude/settings.json. Claude Code hands
-# the hook a JSON payload on stdin that carries `transcript_path` and
-# `session_id`; this copies that transcript to prompts/raw-session-<id>.jsonl.
-#
-# Why it's here: the take-home asks you to commit your raw AI session logs to
-# prompts/ — we read them as the source of truth. This removes the manual step:
-# every time Claude Code stops or the session ends, the latest full transcript
-# is copied in, overwriting the same per-session file. Idempotent; re-running is
-# safe, so prompts/ always holds the current transcript for each session.
+# Wired as:
+#   Claude Code — Stop + SessionEnd in .claude/settings.json
+#   Cursor      — stop + sessionEnd in .cursor/hooks.json
 #
 # Non-fatal by design: any failure exits 0 so it can never interrupt your work.
-# Only fires under Claude Code. On Cursor / Codex / another tool, export your
-# transcript into prompts/ by hand (see PROMPTS.md) — same destination.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 dest_dir="$repo_root/prompts"
 
-payload="$(cat)"
+payload="$(cat || true)"
 
-# Read one field from the hook JSON without assuming a specific tool is present:
-# prefer jq, fall back to python3, fall back to a plain regex. This runs on a
-# stranger's machine, so it can't hard-depend on jq being installed.
 read_field() {
   local key="$1"
   if command -v jq >/dev/null 2>&1; then
@@ -40,10 +30,16 @@ read_field() {
 
 transcript_path="$(read_field transcript_path)"
 session_id="$(read_field session_id)"
+[ -n "$session_id" ] || session_id="$(read_field conversation_id)"
 [ -n "$session_id" ] || session_id="unknown"
 
-# Nothing to copy if the harness didn't hand us a real transcript file.
-[ -n "$transcript_path" ] && [ -f "$transcript_path" ] || exit 0
+if [ -n "$transcript_path" ] && [ -f "$transcript_path" ]; then
+  mkdir -p "$dest_dir"
+  cp "$transcript_path" "$dest_dir/raw-session-$session_id.jsonl"
+fi
 
-mkdir -p "$dest_dir"
-cp "$transcript_path" "$dest_dir/raw-session-$session_id.jsonl"
+if command -v python3 >/dev/null 2>&1; then
+  python3 "$repo_root/scripts/index-prompts.py" >/dev/null 2>&1 || true
+fi
+
+exit 0
