@@ -1,0 +1,5 @@
+# Your raw AI session transcripts land here — the source of truth we read most closely.
+# Claude Code users: this is automatic (a Stop + SessionEnd hook exports each
+# session to raw-session-<id>.jsonl — see ../scripts/export-transcript.sh).
+# Other tools: export your full session transcript and drop it in here as-is.
+# Keep ../PROMPTS.md as your annotated index on top of these files.
