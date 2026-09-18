@@ -1,0 +1,9 @@
+import type { FastifyPluginAsync } from 'fastify';
+
+import type { BackendServices } from '../../../../../common/services/backend.js';
+
+export const ingestSeedsRoutes =
+  (services: BackendServices): FastifyPluginAsync =>
+  async (app) => {
+    app.post('/', async () => services.ingestSeeds());
+  };

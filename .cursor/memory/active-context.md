@@ -2,7 +2,7 @@
 
 ## Current focus
 
-- Schema **draft** in `DATABASE_SCHEMA.md`; feature routes and resource initialization are not built. **Locked:** one `documents` table, `source` uploaded|generated; Claude Design extras (`size_bytes`, `chunks.heading`, multi-portco chat retrieve). **Open:** orgs table vs enum; citation FKs vs jsonb. No Prisma schema until those.
+- Backend complete: Prisma/pgvector schema, MinIO/SQS initialization, every `API_SPECS.md` route, async Xenova ingest worker, scoped retrieval, Anthropic SSE chat/brief persistence, and backend tests. Schema locked: organization rows, one documents table, citation-to-chunk FKs, `uuid[]` source ids, vector(384).
 
 ## Recent decisions
 
@@ -18,13 +18,12 @@
 
 ## Open questions (candidate — not agent-filled)
 
-- Data model (checkpoint 3): `documents.source` locked. Confirm `organizations` table vs enum; `generated_citations` → chunks vs jsonb.
-- Product initialization after `make up`: migration + bucket + queue lifecycle.
+- Repeat the Anthropic chat/brief smoke path once an API key is configured.
 
 ## Known issues
 
-- Backing resources start empty; scaffold runs, product does not until features are built.
+- Chat and brief runtime smoke verification requires `ANTHROPIC_API_KEY`; missing key correctly returns `503 failed_dependency`.
 - `DECISIONS.md` still has empty reminder blocks; `PROMPTS.md` auto-index fills from `prompts/`.
 - Transcript hook needs trusted workspace / Hooks enabled in Cursor.
-- Two backend API bootstrap tests; no frontend tests or CI.
+- Backend unit suite covers route contracts, service isolation, chunking, and worker state/failure paths; no frontend tests or CI.
 - `npm audit --omit=dev`: current required `@xenova/transformers` line carries transitive protobufjs/sharp advisories; do not force-downgrade it without validating the required embedding stack.

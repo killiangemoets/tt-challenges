@@ -4,7 +4,7 @@
 
 - **Target process map:** repo-root `ARCHITECTURE.md` (ASCII topology). React SPA → Fastify API; ingest **worker** consumes ElasticMQ; MinIO objects; Postgres+pgvector; Anthropic from the API only.
 - **Code layout:** `REPO_ARCHITECTURE.md` — git monorepo, two packages: `apps/frontend` (Vite SPA), `apps/backend` (Fastify `src/api` + ElasticMQ `src/worker` + `src/common` + `test/` sibling of `src/`). No Turbo/Nx; no extra `packages/*` unless shared Zod actually hurts. LLM prompts: `llm-prompts/v1/` (not `apps/backend/src/prompts/` or repo `prompts/`).
-- Runtime today: `make up` runs six Docker services — Vite `frontend`, Fastify `api`, idle `worker`, Postgres `db`, MinIO, ElasticMQ `queue`. App source is bind-mounted; backend/frontend have named `node_modules` volumes. Product schema, bucket, queue, routes, and worker consumption are not implemented. Compose project: `second-brain`.
+- Runtime today: `make up` runs six Docker services — Vite `frontend`, Fastify `api`, ingest `worker`, Postgres `db`, MinIO, ElasticMQ `queue`. API/worker deploy the Prisma migration; API initializes the `documents` bucket and `ingest` queue. All `/api/v1` routes and worker consumption are implemented.
 
 ## Key directories
 
@@ -27,11 +27,11 @@
 
 Typical portco docs: VCP, scorecards, board decks, org DD, leadership assessments, interview notes, competency frameworks, 360s. **Ingest this slice:** `.md` only (BE+FE). `inbox/office/` binaries are not parsed. Seeds via **Ingest Seeds** (org from path); uploads via Add-file (file + org).
 
-## Boundaries (target shape from SPEC/STACK — not implemented)
+## Implemented backend boundaries
 
-- **Object storage (MinIO):** raw files.
-- **Queue (ElasticMQ):** async ingest workers — not all-inline (pillar point).
-- **Postgres + pgvector:** chunks, embeddings, metadata, generated artifacts.
+- **Object storage (MinIO):** uploaded/generated markdown under provenance-scoped keys.
+- **Queue (ElasticMQ):** one-at-a-time async ingest with 300s visibility and visible failed status.
+- **Postgres + pgvector:** locked organizations/documents/chunks/generated-citations model; vector(384).
 - **API (Fastify + Prisma):** app surface; **UI (Vite React SPA, TanStack Query, shadcn/Radix).** HTTP + ingest worker: `API_SPECS.md` (`/api/v1`, queue `ingest`, batch retry, chat `portcoOrganizationIds`, citation markers). Docs at `/api-docs.html`.
 - **Anthropic:** official SDK in the API (no LangChain/LangGraph). Local `@xenova/transformers` for embeddings.
 - Only external network: Anthropic API.

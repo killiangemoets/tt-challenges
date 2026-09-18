@@ -1,6 +1,6 @@
-# Database schema (draft)
+# Database schema
 
-Postgres + pgvector. Prisma owns migrations; similarity search may be `$queryRaw`. **Not locked** until you confirm the remaining calls at the bottom — no Prisma schema until then.
+Postgres + pgvector. Prisma owns migrations; similarity search uses parameterized raw SQL.
 
 Locked product rules this draft follows:
 
@@ -135,15 +135,11 @@ Generated rows never appear in this query. Neighbor context for a citation drawe
 
 ---
 
-## Confirm before Prisma (checkpoint 3)
+## Locked at checkpoint 3
 
-**Locked:** one `documents` table with `source` = `uploaded` | `generated` (not two tables).
-
-Still open:
-
-1. **`organizations` table** vs enum-only on the document — draft uses a table so fund-vs-portco is a row, not a string in every handler.
-2. **`generated_citations` → `chunks`** vs stuffing cites into jsonb on the brief — draft uses FKs so Dana’s evidence is a real passage id.
-
-Also fine to change: embedding dimension once we pick the xenova model; whether `source_document_ids` stays an array or a join table.
+Locked: one `documents` table with `source = uploaded | generated`;
+`organizations` as first-class rows; `generated_citations.chunk_id` as a foreign
+key to `chunks`; `source_document_ids` as `uuid[]`; and
+`Xenova/all-MiniLM-L6-v2` embeddings as `vector(384)`.
 
 Locked with the Claude Design prototype (`claude-design/`): `chunks.heading`, `documents.size_bytes`, chat retrieve across multiple portcos, citation `marker` on the wire (not a DB column — chat cites are SSE-only).

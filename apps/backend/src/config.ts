@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { resolve } from 'node:path';
 
 const configSchema = z.object({
   nodeEnv: z.enum(['development', 'test', 'production']),
@@ -24,6 +25,7 @@ const configSchema = z.object({
     secretAccessKey: z.string().min(1),
   }),
   anthropicApiKey: z.string().optional(),
+  repoRoot: z.string().min(1),
 });
 
 const env = process.env;
@@ -38,13 +40,12 @@ export const config = configSchema.parse({
     ),
   },
   databaseUrl:
-    env.DATABASE_URL ??
-    'postgresql://brain:brain@localhost:5432/secondbrain',
+    env.DATABASE_URL ?? 'postgresql://brain:brain@localhost:5432/secondbrain',
   minio: {
     endpoint: env.MINIO_ENDPOINT ?? 'http://localhost:9000',
     accessKey: env.MINIO_ACCESS_KEY ?? 'minio-root',
     secretKey: env.MINIO_SECRET_KEY ?? 'minio-secret',
-    bucket: env.MINIO_BUCKET ?? 'second-brain',
+    bucket: env.MINIO_BUCKET ?? 'documents',
   },
   sqs: {
     endpoint: env.SQS_ENDPOINT ?? 'http://localhost:9324',
@@ -56,4 +57,5 @@ export const config = configSchema.parse({
     secretAccessKey: env.AWS_SECRET_ACCESS_KEY ?? 'local',
   },
   anthropicApiKey: env.ANTHROPIC_API_KEY || undefined,
+  repoRoot: env.REPO_ROOT ?? resolve(process.cwd(), '../..'),
 });

@@ -2,7 +2,7 @@
 
 ## Runtime
 
-- `make up` runs `frontend` (`:5173`), `api` (`:3000`), idle `worker`, `db`, `minio`, and `queue`. Product features/resources are not initialized.
+- `make up` runs `frontend` (`:5173`), `api` (`:3000`), ingest `worker`, `db`, MinIO, and ElasticMQ. API/worker deploy Prisma migrations; API creates the `documents` bucket and `ingest` queue.
 - Root npm workspaces + one lockfile. Node 22.18+ in app images; host Node/npm not required.
 - Backing: Docker Desktop (or compatible), ~4GB free.
 
@@ -19,6 +19,7 @@
 | tailwindcss + lucide-react + lodash | Styling, icons, helpers |
 | prettier (FE+BE); eslint (BE) | Basic format/lint |
 | Fastify | API |
+| `@fastify/multipart` | Markdown upload parsing; 10 MB limit |
 | Prisma | Schema/migrations/Postgres (pgvector via raw SQL if needed) |
 | OpenAPI HTML | Served at `/api-docs.html` |
 | Postgres 16 + pgvector `pgvector/pgvector:pg16` | Chunks, embeddings, metadata |
@@ -40,7 +41,7 @@
 | `minio` | API `:9000`, console `:9001` | `minio-root` / `minio-secret`; volume `miniodata` |
 | `queue` | `:9324` | local any; no compose volume; CreateQueue via API |
 
-`make reset` = `docker compose down -v` then `up`; this also recreates app dependency volumes. DB/MinIO/queue remain empty until feature initialization is implemented.
+`make reset` = `docker compose down -v` then `up`; this recreates app dependency volumes, applies the initial pgvector migration, seeds four organizations, and initializes the bucket/queue.
 
 ## Configuration
 

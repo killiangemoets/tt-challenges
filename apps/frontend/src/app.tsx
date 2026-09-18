@@ -1,9 +1,18 @@
 import { Route, Routes } from 'react-router-dom';
 
-import { ReadinessPage } from '@/pages/readiness';
+import { AppShell } from '@/components/app-shell';
+import { ChatPage } from '@/pages/chat';
+import { DashboardPage } from '@/pages/dashboard';
+import { DocumentsPage } from '@/pages/documents';
 
 export const App = () => (
-  <Routes>
-    <Route path="*" element={<ReadinessPage />} />
-  </Routes>
+  <AppShell>
+    <Routes>
+      <Route path="/" element={<DashboardPage />} />
+      <Route path="/chat" element={<ChatPage />} />
+      <Route path="/documents" element={<DocumentsPage />} />
+      <Route path="/documents/:id" element={<DocumentsPage />} />
+      <Route path="*" element={<DashboardPage />} />
+    </Routes>
+  </AppShell>
 );

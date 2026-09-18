@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrganizationKind {
+  fund
+  portco
+}
+
+enum DocumentSource {
+  uploaded
+  generated
+}
+
+enum DocumentOrigin {
+  seed
+  upload
+}
+
+enum DocumentStatus {
+  queued
+  processing
+  ready
+  failed
+}
+
+model Organization {
+  id        String           @id @default(uuid()) @db.Uuid
+  slug      String           @unique
+  kind      OrganizationKind
+  name      String
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  documents Document[]
+  chunks    Chunk[]
+
+  @@map("organizations")
+}
+
+model Document {
+  id                  String              @id @default(uuid()) @db.Uuid
+  organizationId      String              @map("organization_id") @db.Uuid
+  source              DocumentSource
+  origin              DocumentOrigin?
+  status              DocumentStatus
+  filename            String
+  title               String?
+  storageKey          String              @unique @map("storage_key")
+  sizeBytes            Int?                @map("size_bytes")
+  seedPath             String?             @map("seed_path")
+  errorMessage         String?             @map("error_message")
+  attemptCount         Int                 @default(1) @map("attempt_count")
+  readyAt              DateTime?           @map("ready_at") @db.Timestamptz(6)
+  promptVersion        String?             @map("prompt_version")
+  templateVersion      String?             @map("template_version")
+  createdByLabel       String?             @map("created_by_label")
+  sourceDocumentIds    String[]             @map("source_document_ids") @db.Uuid
+  flags                Json?
+  createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization        Organization        @relation(fields: [organizationId], references: [id])
+  chunks               Chunk[]
+  generatedCitations   GeneratedCitation[]
+
+  @@unique([organizationId, seedPath])
+  @@index([source, status])
+  @@index([organizationId])
+  @@map("documents")
+}
+
+model Chunk {
+  id                   String              @id @default(uuid()) @db.Uuid
+  documentId           String              @map("document_id") @db.Uuid
+  organizationId       String              @map("organization_id") @db.Uuid
+  index                 Int
+  content               String
+  heading               String?
+  embedding             Unsupported("vector(384)")
+  createdAt             DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  document              Document            @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  organization          Organization        @relation(fields: [organizationId], references: [id])
+  generatedCitations    GeneratedCitation[]
+
+  @@unique([documentId, index])
+  @@index([organizationId])
+  @@map("chunks")
+}
+
+model GeneratedCitation {
+  id         String   @id @default(uuid()) @db.Uuid
+  documentId String   @map("document_id") @db.Uuid
+  chunkId    String   @map("chunk_id") @db.Uuid
+  section    String
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  chunk      Chunk    @relation(fields: [chunkId], references: [id])
+
+  @@unique([documentId, chunkId, section])
+  @@map("generated_citations")
+}

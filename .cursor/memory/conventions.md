@@ -30,7 +30,7 @@ Do not invent, polish, or expand rationales. Never write **In your own words** (
 
 ## Testing
 
-- `apps/backend/test/` (`api` / `worker` / `common`), sibling of `src/`; Vitest. Bootstrap has 2 Fastify inject tests. No DB/global setup yet. Reviewers still run `make up` + DECISIONS path; tests are not a substitute.
+- `apps/backend/test/` (`api` / `worker` / `common`), sibling of `src/`; Vitest. Fastify routes accept injected services; AWS, Anthropic, Xenova, and Prisma are faked in unit tests. No live Anthropic calls or duplicate DB setup.
 
 ## Agent / Cursor wiring
 

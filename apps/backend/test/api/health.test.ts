@@ -10,7 +10,7 @@ afterEach(async () => {
 
 describe('API bootstrap', () => {
   it('reports health without product dependencies', async () => {
-    const app = await buildApp();
+    const app = await buildApp({ initializeResources: false });
     apps.push(app);
 
     const response = await app.inject({
@@ -23,7 +23,7 @@ describe('API bootstrap', () => {
   });
 
   it('serves generated API documentation', async () => {
-    const app = await buildApp();
+    const app = await buildApp({ initializeResources: false });
     apps.push(app);
 
     const response = await app.inject({
