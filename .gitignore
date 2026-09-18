@@ -1,8 +1,11 @@
 # Candidate working files
 .env
 node_modules/
+.npm/
 dist/
 build/
+coverage/
+.vite/
 .DS_Store
 __pycache__/
 *.pyc

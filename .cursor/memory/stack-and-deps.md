@@ -2,7 +2,8 @@
 
 ## Runtime
 
-- **No app runtime in repo yet.** Candidate adds a Vite React 18 **SPA** (host or Docker) and a **Fastify** TypeScript API.
+- `make up` runs `frontend` (`:5173`), `api` (`:3000`), idle `worker`, `db`, `minio`, and `queue`. Product features/resources are not initialized.
+- Root npm workspaces + one lockfile. Node 22.18+ in app images; host Node/npm not required.
 - Backing: Docker Desktop (or compatible), ~4GB free.
 
 ## Major dependencies
@@ -21,7 +22,7 @@
 | Prisma | Schema/migrations/Postgres (pgvector via raw SQL if needed) |
 | OpenAPI HTML | Served at `/api-docs.html` |
 | Postgres 16 + pgvector `pgvector/pgvector:pg16` | Chunks, embeddings, metadata |
-| MinIO | S3-compatible object storage |
+| MinIO `quay.io/minio/minio` | S3-compatible object storage |
 | ElasticMQ `softwaremill/elasticmq-native` | SQS-compatible queue |
 | AWS SDK S3/SQS | Pipeline; MinIO `forcePathStyle: true` |
 | Anthropic official SDK | Converse/generate via `messages.stream`. **No LangChain/LangGraph.** |
@@ -39,11 +40,12 @@
 | `minio` | API `:9000`, console `:9001` | `minio-root` / `minio-secret`; volume `miniodata` |
 | `queue` | `:9324` | local any; no compose volume; CreateQueue via API |
 
-`make reset` = `docker compose down -v` then `up`. Empty until candidate creates schema/buckets/queues (code, migrations, or init — must run after clean `make up`).
+`make reset` = `docker compose down -v` then `up`; this also recreates app dependency volumes. DB/MinIO/queue remain empty until feature initialization is implemented.
 
 ## Configuration
 
-- `.env.example` → `.env`: `ANTHROPIC_API_KEY` only (app env vars added with the services).
-- `.gitignore`: `.env`, `node_modules/`, `dist/`, `build/`, venv, `.DS_Store`.
+- `.env.example` → `.env`: optional-at-bootstrap `ANTHROPIC_API_KEY`, host ports, local DB/MinIO/SQS URLs/credentials, CORS, frontend API URL. Compose overrides internal hosts.
+- `.gitignore`: `.env`, package/build/coverage caches, venv, `.DS_Store`.
 - Hooks: `.cursor/hooks.json`, `.claude/settings.json` → export + `scripts/index-prompts.py`.
-- No `package.json` / lockfiles yet.
+- Commands: `make up/down/reset/ps/logs/psql/build/typecheck/lint/test`.
+- Root `package.json` workspaces + `package-lock.json`; backend/frontend Dockerfiles use `npm ci`.

@@ -6,30 +6,36 @@ Empty-infra build challenge: a working slice of DAW Capital’s document-intelli
 
 ```bash
 cp .env.example .env          # paste ANTHROPIC_API_KEY
-make up                       # Postgres+pgvector :5432, MinIO :9000/:9001, ElasticMQ :9324 (all empty)
+make up                       # build/start frontend, API, worker, db, MinIO, ElasticMQ
 make down                     # stop; keep volumes
 make reset                    # wipe volumes + up
 make ps
-make logs                     # or SVC=db|minio|queue
+make logs                     # or SVC=frontend|api|worker|db|minio|queue
 make psql                     # psql -U brain -d secondbrain
+make build                    # backend + frontend production builds, in Docker
+make typecheck                # backend + frontend, in Docker
+make lint                     # backend + frontend, in Docker
+make test                     # backend Vitest, in Docker
 python3 scripts/index-prompts.py   # rebuild PROMPTS.md auto-index from prompts/*.jsonl
 ```
 
-No app install/test/lint yet — candidate adds services and documents the run path in `DECISIONS.md` (or `RUNNING.md`). Keep `make up` as the compose entry point.
+Node 22.18+ is encoded in the Docker images; host Node/npm is not required. Root npm workspaces + `package-lock.json`; no Turbo/Nx. `make up` is the compose entry point. Bootstrap only: no app schema, bucket, queue, or product feature yet.
 
 ## Environment
 
 | Variable / endpoint | Purpose |
 |---------------------|---------|
 | `ANTHROPIC_API_KEY` | Only allowed external API (generation / conversation). `.env` gitignored. |
+| Frontend `localhost:5173` | Vite SPA readiness page; source bind-mounted |
+| API `localhost:3000` | `/health`; generated docs at `/api-docs.html` |
 | Postgres `localhost:5432` | `brain` / `brain`, db `secondbrain` — schema is candidate-owned |
 | MinIO API `localhost:9000`, console `:9001` | `minio-root` / `minio-secret`; S3 SDK `forcePathStyle: true` |
 | ElasticMQ `localhost:9324` | SQS-compatible; create queues via API; local creds any |
 
 ## Architecture (summary)
 
-- **Today:** `docker-compose.yml` (`name: second-brain`) — `db`, `minio`, `queue` only. No app, schema, buckets, or queues.
-- **Target processes:** `ARCHITECTURE.md` — Vite React SPA → Fastify API; ingest **worker** behind ElasticMQ; MinIO; Postgres+pgvector; Anthropic from the API.
+- **Today:** `docker-compose.yml` (`name: second-brain`) — `frontend`, `api`, idle `worker`, `db`, `minio`, `queue`. Apps are scaffolds; no product schema, buckets, queues, or features.
+- **Target processes:** `ARCHITECTURE.md` — Vite React SPA → Fastify API; ingest **worker** behind ElasticMQ; MinIO; Postgres+pgvector; Anthropic from the API. HTTP + worker contract: `API_SPECS.md`. **Code layout:** `REPO_ARCHITECTURE.md` — `apps/frontend` + `apps/backend` (`src/api`, `src/worker`, `src/common`, `test/`).
 - **Schema draft:** `DATABASE_SCHEMA.md` — one `documents` table (`source` uploaded|generated). No Prisma until remaining checkpoint 3 confirms.
 - **Corpus:** `data/` (fund + PC1 Vantage, PC2 Cascade, PC3 Ridgeline). **Customer context:** `context-brain/`.
 - **To build (STACK):** Vite React 18 **SPA** (CSR, `react-router-dom`, Tailwind, shadcn/Radix, TanStack Query, RHF+zod, axios, lucide, prettier; TanStack Table if a table UI exists). **Fastify** + TypeScript + zod + Prisma + axios + eslint/prettier; API docs at **`/api-docs.html`**. Postgres+pgvector; MinIO + ElasticMQ (AWS SDK); Anthropic **official SDK** (`messages.stream`; no LangChain/LangGraph); embeddings **`@xenova/transformers`**. No Hono, no Next/SSR.
@@ -50,7 +56,7 @@ Deep knowledge in `.cursor/memory/`. Read by task — do not load all files ever
 | File | Contains | Read when |
 |------|----------|-----------|
 | project-brief.md | Mission, timebox, eval, definition of done | Scope, use case, cuts |
-| architecture.md | Backing services vs to-build; `data/` layout; pillar data flow | Schema, pipeline, new modules |
+| architecture.md | Backing services vs to-build; `data/` layout; pillar data flow; `REPO_ARCHITECTURE.md` | Schema, pipeline, new modules, folder layout |
 | conventions.md | Checkpoints, DECISIONS/PROMPTS rules, stack rails, agent must-nots | Any implementation |
 | business-logic.md | DAW/portcos, personas, JTBD, grounding/isolation invariants | Features, generate UX |
 | ux-direction.md | DESIGN tokens and product-feel | UI, dashboard, generated docs |

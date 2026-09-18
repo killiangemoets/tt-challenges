@@ -1,0 +1,41 @@
+{
+  "name": "@second-brain/backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev:api": "tsx watch src/api/server.ts",
+    "dev:worker": "tsx watch src/worker/main.ts",
+    "format": "prettier --write .",
+    "lint": "eslint .",
+    "start:api": "node dist/api/server.js",
+    "start:worker": "node dist/worker/main.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest",
+    "@aws-sdk/client-s3": "latest",
+    "@aws-sdk/client-sqs": "latest",
+    "@fastify/cors": "latest",
+    "@fastify/swagger": "latest",
+    "@fastify/swagger-ui": "latest",
+    "@prisma/client": "^6.19.1",
+    "@xenova/transformers": "latest",
+    "axios": "latest",
+    "fastify": "latest",
+    "pino": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@eslint/js": "latest",
+    "@types/node": "latest",
+    "eslint": "latest",
+    "prettier": "latest",
+    "prisma": "^6.19.1",
+    "tsx": "latest",
+    "typescript": "latest",
+    "typescript-eslint": "latest",
+    "vitest": "latest"
+  }
+}

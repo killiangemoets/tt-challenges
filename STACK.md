@@ -2,17 +2,23 @@
 
 *We constrain the technology **families** — because the job is building in our stack — and lock a few libraries (simple RAG, local embeddings, the FE/BE kits below). Schema, chunking, and screen layout stay yours.*
 
-## What you get (already wired)
+## What is wired
 
-`make up` starts three **empty** backing services (see `docker-compose.yml`):
+`make up` builds and starts the three app processes plus three **empty** backing services (see `docker-compose.yml`):
+
+| App process | Where | Current bootstrap |
+|---|---|---|
+| **React SPA** | `http://localhost:5173` | Vite readiness page; product UI not built |
+| **Fastify API** | `http://localhost:3000` | `GET /health`, OpenAPI at `/api-docs.html`; feature routes not built |
+| **Ingest worker** | no HTTP | Long-running idle process; queue consumption not built |
 
 | Service | Image | Where | Credentials |
 |---|---|---|---|
 | **Postgres 16 + pgvector** | `pgvector/pgvector:pg16` | `localhost:5432` | `brain` / `brain`, db `secondbrain` |
-| **MinIO** (S3-compatible object storage) | `minio/minio` | API `localhost:9000`, console `localhost:9001` | `minio-root` / `minio-secret` |
+| **MinIO** (S3-compatible object storage) | `quay.io/minio/minio` | API `localhost:9000`, console `localhost:9001` | `minio-root` / `minio-secret` |
 | **ElasticMQ** (SQS-compatible queue) | `softwaremill/elasticmq-native` | `localhost:9324` | any (local) |
 
-No schema, no buckets, no queues exist yet — **creating them is part of your build** (from code, migrations, or an init script; your call, but it must happen on a clean `make up` + your documented steps). `make psql` gives you a SQL shell; the MinIO console shows buckets and objects; `make reset` wipes everything.
+No schema, buckets, or queues exist yet — **creating them is part of the feature build** (from code, migrations, or an init script; your call, but it must happen on a clean `make up` + your documented steps). `make psql` gives you a SQL shell; the MinIO console shows buckets and objects; `make reset` wipes data and dependency volumes.
 
 ## The families (build within these)
 

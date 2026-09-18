@@ -1,0 +1,48 @@
+# Backing services for the Second Brain build — Postgres+pgvector, MinIO, ElasticMQ.
+# They start EMPTY: schema, buckets, and queues are yours to create (see STACK.md).
+# Extend this file freely — add your app's services here, or run them on the host.
+
+name: second-brain
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: brain
+      POSTGRES_PASSWORD: brain
+      POSTGRES_DB: secondbrain
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U brain -d secondbrain"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio-root
+      MINIO_ROOT_PASSWORD: minio-secret
+    ports:
+      - "9000:9000"   # S3 API  (SDK: endpoint http://localhost:9000, forcePathStyle: true)
+      - "9001:9001"   # web console
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  queue:
+    image: softwaremill/elasticmq-native:latest
+    ports:
+      - "9324:9324"   # SQS-compatible API (SDK: endpoint http://localhost:9324; create queues via CreateQueue)
+
+volumes:
+  pgdata:
+  miniodata:

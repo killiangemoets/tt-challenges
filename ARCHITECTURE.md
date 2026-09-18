@@ -1,6 +1,6 @@
 # App architecture
 
-Target process map for the Second Brain slice. Libraries and ports for **backing** services: [STACK.md](STACK.md). Product calls: [DECISIONS.md](DECISIONS.md). This file is the intended topology — not running until we add those services.
+Target process map for the Second Brain slice. Libraries and ports: [STACK.md](STACK.md). Product calls: [DECISIONS.md](DECISIONS.md). All processes have runnable scaffolds; product routes and data flows below are still to build.
 
 ## Processes
 
@@ -83,5 +83,7 @@ Retrieval scope: fund always in; optional PC1 / PC2 / PC3; none selected = fund 
 
 ## What this file does not lock
 
+- Code packages and folders — [REPO_ARCHITECTURE.md](REPO_ARCHITECTURE.md) (`apps/frontend` + `apps/backend` with `api` / `worker` / `common`).
 - Table/column schema — draft in [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md); lock before the first Prisma migration.
-- Queue name, bucket name, API/FE ports, compose vs host for SPA / API / worker — name them when we extend `docker-compose.yml`.
+- Bucket/queue creation lifecycle — names are configured (`second-brain`, `ingest`) but resources are not initialized yet.
+- HTTP paths, JSON/SSE shapes, and ingest-worker queue/status/chunk contract — [API_SPECS.md](API_SPECS.md).

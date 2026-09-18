@@ -3,7 +3,8 @@
 ## Overview
 
 - **Target process map:** repo-root `ARCHITECTURE.md` (ASCII topology). React SPA → Fastify API; ingest **worker** consumes ElasticMQ; MinIO objects; Postgres+pgvector; Anthropic from the API only.
-- Runtime today: three empty Docker services in `docker-compose.yml`. App processes not added yet. Compose project name: `second-brain`. Extend compose/Makefile freely; keep `make up` as entry.
+- **Code layout:** `REPO_ARCHITECTURE.md` — git monorepo, two packages: `apps/frontend` (Vite SPA), `apps/backend` (Fastify `src/api` + ElasticMQ `src/worker` + `src/common` + `test/` sibling of `src/`). No Turbo/Nx; no extra `packages/*` unless shared Zod actually hurts. LLM prompts: `llm-prompts/v1/` (not `apps/backend/src/prompts/` or repo `prompts/`).
+- Runtime today: `make up` runs six Docker services — Vite `frontend`, Fastify `api`, idle `worker`, Postgres `db`, MinIO, ElasticMQ `queue`. App source is bind-mounted; backend/frontend have named `node_modules` volumes. Product schema, bucket, queue, routes, and worker consumption are not implemented. Compose project: `second-brain`.
 
 ## Key directories
 
@@ -19,7 +20,10 @@
 | `prompts/` | Raw **session** transcripts (reviewers) — **not** Anthropic system prompts |
 | `llm-prompts/v1/` | Versioned chat + generate system prompts |
 | `templates/portco-brief.md` | Fixed Dana memo skeleton (generate fills; headings always kept) |
-| `docker-compose.yml` / `Makefile` | Backing services lifecycle |
+| `apps/frontend/` | React 18 + Vite readiness scaffold; router/query providers; Tailwind/shadcn foundation |
+| `apps/backend/` | Fastify `/health` + `/api-docs.html`, idle worker, config, backend tests |
+| `REPO_ARCHITECTURE.md` | `apps/frontend` + `apps/backend` (`src/api`, `src/worker`, `src/common`, `test/`) |
+| `docker-compose.yml` / `Makefile` | Complete six-service development lifecycle |
 
 Typical portco docs: VCP, scorecards, board decks, org DD, leadership assessments, interview notes, competency frameworks, 360s. **Ingest this slice:** `.md` only (BE+FE). `inbox/office/` binaries are not parsed. Seeds via **Ingest Seeds** (org from path); uploads via Add-file (file + org).
 
@@ -28,7 +32,7 @@ Typical portco docs: VCP, scorecards, board decks, org DD, leadership assessment
 - **Object storage (MinIO):** raw files.
 - **Queue (ElasticMQ):** async ingest workers — not all-inline (pillar point).
 - **Postgres + pgvector:** chunks, embeddings, metadata, generated artifacts.
-- **API (Fastify + Prisma):** app surface; **UI (Vite React SPA, TanStack Query, shadcn/Radix).** Docs at `/api-docs.html`.
+- **API (Fastify + Prisma):** app surface; **UI (Vite React SPA, TanStack Query, shadcn/Radix).** HTTP + ingest worker: `API_SPECS.md` (`/api/v1`, queue `ingest`). Docs at `/api-docs.html`.
 - **Anthropic:** official SDK in the API (no LangChain/LangGraph). Local `@xenova/transformers` for embeddings.
 - Only external network: Anthropic API.
 

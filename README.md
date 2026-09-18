@@ -15,7 +15,7 @@ A working slice of **the Second Brain** for a fictional PE fund, DAW Capital. Th
 3. **Generate** — from chat, a **portco brief** for Dana (from `templates/portco-brief.md`), grounded in the knowledge base, with trust chrome — saved as a **generated** document, not mixed with uploads.
 4. **Dashboard** — a surface that makes the system legible at a glance.
 
-The spec is deliberate about **what**; schema and UX are yours. **[STACK.md](STACK.md)** lists the technology families and the libraries we locked (Fastify + Prisma, Vite React SPA, Anthropic official SDK, local `@xenova/transformers` — **no LangChain / LangGraph**, **no Hono**, **no Next/SSR**) plus the empty backing services; **[ARCHITECTURE.md](ARCHITECTURE.md)** is the intended process map (SPA, API, ingest worker, queue, MinIO, pgvector); **[DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)** is the draft data model; **[DESIGN.md](DESIGN.md)** gives light brand guidance. Inside those rails, build it your way.
+The spec is deliberate about **what**; schema and UX are yours. **[STACK.md](STACK.md)** lists the technology families and the libraries we locked (Fastify + Prisma, Vite React SPA, Anthropic official SDK, local `@xenova/transformers` — **no LangChain / LangGraph**, **no Hono**, **no Next/SSR**) plus the empty backing services; **[ARCHITECTURE.md](ARCHITECTURE.md)** is the intended process map (SPA, API, ingest worker, queue, MinIO, pgvector); **[REPO_ARCHITECTURE.md](REPO_ARCHITECTURE.md)** is the intended code layout (`apps/frontend` + `apps/backend`); **[DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)** is the draft data model; **[API_SPECS.md](API_SPECS.md)** is the HTTP/SSE contract for the Fastify API and the ingest worker; **[DESIGN.md](DESIGN.md)** gives light brand guidance. Inside those rails, build it your way.
 
 ## Before you build: understand the customer
 
@@ -27,16 +27,31 @@ Be aware: **the questions you ask — of the brain, of us — are part of what w
 
 ## Quick start
 
-You need Docker Desktop (or compatible), ~4GB free, and an **Anthropic API key** (Your Claude Subscription key would work too). Everything runs locally; nothing else is required.
+You need Docker Desktop (or compatible) and ~4GB free. An **Anthropic API key** is required once chat/generate is implemented, but the development stack starts without one.
 
 ```bash
 git clone <your repo>
 cd tt-challenges
 cp .env.example .env     # paste your Anthropic key
-make up                  # starts the backing services: Postgres+pgvector, MinIO, ElasticMQ
+make up                  # builds and starts the complete development stack
 ```
 
-That gives you running, **empty** infrastructure (see [STACK.md](STACK.md) for ports and credentials). The schema, buckets, queues, services, and app are yours to create.
+That starts the React readiness page (`http://localhost:5173`), Fastify health endpoint (`http://localhost:3000/health`), API docs (`http://localhost:3000/api-docs.html`), idle ingest worker, Postgres+pgvector, MinIO, and ElasticMQ. Source is bind-mounted for hot reload.
+
+The scaffold deliberately has no product features yet. Postgres has no app schema, and MinIO/ElasticMQ have no bucket or queue. Those are created with the feature implementation.
+
+Useful commands:
+
+```bash
+make ps
+make logs              # or: make logs SVC=api
+make build
+make typecheck
+make lint
+make test              # backend bootstrap tests
+make down
+make reset             # wipe volumes, then start again
+```
 
 ## Timebox — 2 to 3 hours
 

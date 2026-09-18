@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #FAF8F3; }
+  body { font-family: "IBM Plex Sans", system-ui, sans-serif; color: #1D2129; -webkit-font-smoothing: antialiased; }
+  * { box-sizing: border-box; }
+  a { color: #2F6F4F; text-decoration: none; }
+  a:hover { color: #1F4A35; text-decoration: underline; }
+  button { font-family: inherit; }
+  input, select, textarea { font-family: inherit; }
+  @keyframes blink { 0%, 49% { opacity: 1 } 50%, 100% { opacity: 0 } }
+  @keyframes spin { to { transform: rotate(360deg) } }
+</style>
+</helmet>
+
+<div style="min-height: 100vh; background: #FAF8F3">
+
+  <div style="display: flex; align-items: center; gap: 28px; flex-wrap: wrap; padding: 0 28px; min-height: 60px; background: #FFFFFF; border-bottom: 1px solid #E3E0D8; position: sticky; top: 0; z-index: 20">
+    <div style="display: flex; align-items: baseline; gap: 10px; padding: 12px 0">
+      <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 19px; font-weight: 600; letter-spacing: -0.01em">Second&nbsp;Brain</span>
+      <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6B7280">DAW Capital</span>
+    </div>
+    <div style="display: flex; gap: 4px; margin-left: -8px">
+      <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="3">
+        <button onClick="{{ tab.go }}" style="border: 0; background: transparent; padding: 20px 12px 18px; font-size: 13.5px; font-weight: 500; cursor: pointer; color: {{ tab.fg }}; box-shadow: {{ tab.rule }}">{{ tab.label }}</button>
+      </sc-for>
+    </div>
+    <div style="flex: 1; min-width: 12px"></div>
+    <div style="display: flex; align-items: center; gap: 10px; padding: 12px 0">
+      <span style="font-size: 12.5px; color: #6B7280">Sam Iyer · Talent Associate</span>
+      <span style="width: 28px; height: 28px; border-radius: 50%; background: #EDEAE1; border: 1px solid #E3E0D8; display: grid; place-items: center; font-size: 11px; font-weight: 600; color: #6B7280">SI</span>
+    </div>
+  </div>
+
+  <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+  <div style="max-width: 1240px; margin: 0 auto; padding: 32px 28px 64px; display: flex; flex-direction: column; gap: 26px">
+
+    <div style="display: flex; align-items: flex-end; gap: 24px; flex-wrap: wrap">
+      <div style="flex: 1; min-width: 260px">
+        <h1 style="margin: 0 0 6px; font-family: 'Source Serif 4', Georgia, serif; font-size: 31px; font-weight: 600; letter-spacing: -0.015em">Morning board</h1>
+        <p style="margin: 0; font-size: 13.5px; color: #6B7280">Friday 18 September 2026 · fund + three portfolio companies · last pipeline event {{ lastEvent }}</p>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap">
+        <button onClick="{{ ingestSeeds }}" style="padding: 9px 15px; font-size: 13px; font-weight: 500; color: #1D2129; background: #FFFFFF; border: 1px solid #C9C4B6; border-radius: 3px; cursor: pointer" style-hover="border-color: #1D2129">Ingest seeds</button>
+        <button onClick="{{ openModal }}" style="padding: 9px 15px; font-size: 13px; font-weight: 500; color: #FFFFFF; background: #2F6F4F; border: 1px solid #2F6F4F; border-radius: 3px; cursor: pointer" style-hover="background: #245840">Add file</button>
+      </div>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #E3E0D8; border-radius: 4px">
+      <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 18px; border-bottom: 1px solid #EDEAE1">
+        <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6B7280">Needs me</span>
+        <span style="font-size: 12.5px; color: {{ needsMeTone }}">{{ needsMeCount }}</span>
+        <div style="flex: 1; min-width: 8px"></div>
+        <sc-if value="{{ hasNeedsMe }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ retryAll }}" style="padding: 6px 12px; font-size: 12.5px; font-weight: 500; color: #B3402F; background: #FFFFFF; border: 1px solid #E0C6C0; border-radius: 3px; cursor: pointer" style-hover="background: #FCF4F2">Retry all</button>
+        </sc-if>
+      </div>
+      <sc-if value="{{ hasNeedsMe }}" hint-placeholder-val="{{ true }}">
+        <sc-for list="{{ needsMe }}" as="d" hint-placeholder-count="2">
+          <div style="display: flex; align-items: flex-start; gap: 18px; flex-wrap: wrap; padding: 15px 18px; border-bottom: 1px solid #F3F1EA">
+            <div style="flex: 1; min-width: 240px">
+              <div style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 5px">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">{{ d.filename }}</span>
+                <span style="font-size: 11.5px; color: #6B7280">{{ d.orgLabel }}</span>
+                <span style="font-size: 11.5px; color: #6B7280">attempt {{ d.attemptCount }}</span>
+              </div>
+              <div style="font-size: 13px; color: {{ d.errorTone }}">{{ d.errorMessage }}</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px">
+              <span style="font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; background: {{ d.pillBg }}; color: {{ d.pillFg }}">{{ d.status }}</span>
+              <button onClick="{{ d.retry }}" style="padding: 6px 13px; font-size: 12.5px; font-weight: 500; color: #FFFFFF; background: #B3402F; border: 0; border-radius: 3px; cursor: pointer" style-hover="background: #94331F">Retry</button>
+            </div>
+          </div>
+        </sc-for>
+      </sc-if>
+      <sc-if value="{{ noNeedsMe }}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 22px 18px; font-size: 13.5px; color: #6B7280">Nothing needs you. No failed or stuck documents in the pipeline.</div>
+      </sc-if>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 26px; align-items: start">
+
+      <div style="background: #FFFFFF; border: 1px solid #E3E0D8; border-radius: 4px">
+        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 18px; border-bottom: 1px solid #EDEAE1">
+          <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6B7280">Pipeline · uploaded &amp; seeded</span>
+          <div style="flex: 1; min-width: 8px"></div>
+          <span style="font-size: 12px; color: #6B7280">{{ pipelineSummary }}</span>
+        </div>
+        <div style="display: grid; grid-template-columns: minmax(0, 1fr) 84px 92px; gap: 10px; padding: 9px 18px; border-bottom: 1px solid #EDEAE1; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A968C">
+          <span>Document</span>
+          <span>Status</span>
+          <span style="text-align: right">Passages</span>
+        </div>
+        <sc-for list="{{ pipeline }}" as="d" hint-placeholder-count="6">
+          <div onClick="{{ d.open }}" style="display: grid; grid-template-columns: minmax(0, 1fr) 84px 92px; gap: 10px; align-items: center; padding: 11px 18px; border-bottom: 1px solid #F3F1EA; cursor: pointer" style-hover="background: #FCFBF7">
+            <div style="min-width: 0">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ d.filename }}</div>
+              <div style="font-size: 11.5px; color: #6B7280; margin-top: 3px">{{ d.orgLabel }} · {{ d.originLabel }} · {{ d.updated }}</div>
+            </div>
+            <span style="justify-self: start; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; background: {{ d.pillBg }}; color: {{ d.pillFg }}">{{ d.status }}</span>
+            <span style="text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: {{ d.chunkTone }}">{{ d.chunkLabel }}</span>
+          </div>
+        </sc-for>
+        <div style="padding: 12px 18px; font-size: 12px; color: #9A968C">Passages = rows in <span style="font-family: 'IBM Plex Mono', monospace">chunks</span>. Ready with zero passages is a failure, not a state.</div>
+      </div>
+
+      <div style="background: #FFFFFF; border: 1px solid #E3E0D8; border-radius: 4px">
+        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 18px; border-bottom: 1px solid #EDEAE1">
+          <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6B7280">Generated briefs</span>
+          <div style="flex: 1; min-width: 8px"></div>
+          <span style="font-size: 12px; color: #6B7280">kept separately from uploads</span>
+        </div>
+        <sc-for list="{{ generated }}" as="g" hint-placeholder-count="2">
+          <div onClick="{{ g.open }}" style="padding: 16px 18px; border-bottom: 1px solid #F3F1EA; cursor: pointer" style-hover="background: #FCFBF7">
+            <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 5px">{{ g.title }}</div>
+            <div style="font-size: 12px; color: #6B7280; margin-bottom: 9px">{{ g.orgLabel }} · {{ g.created }} · {{ g.createdByLabel }} · {{ g.sourceCount }} sources</div>
+            <div style="display: flex; gap: 7px; flex-wrap: wrap">
+              <sc-for list="{{ g.flags }}" as="f" hint-placeholder-count="2">
+                <span style="font-size: 11.5px; padding: 3px 8px; border-radius: 2px; background: #FBF3E4; color: #7A5410; border: 1px solid #EEDFC2">{{ f.code }}</span>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+        <div style="padding: 14px 18px">
+          <button onClick="{{ goDocs }}" style="padding: 8px 14px; font-size: 12.5px; font-weight: 500; color: #2F6F4F; background: #FFFFFF; border: 1px solid #C2D4C8; border-radius: 3px; cursor: pointer" style-hover="background: #F4F8F5">Open the document library</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isChat }}" hint-placeholder-val="{{ false }}">
+  <div style="display: flex; align-items: stretch; flex-wrap: wrap; gap: 0; min-height: calc(100vh - 61px)">
+
+    <div style="flex: 1 1 420px; min-width: 320px; display: flex; flex-direction: column">
+
+      <div style="position: sticky; top: 60px; z-index: 15; padding: 12px 28px; border-bottom: 1px solid #E3E0D8; background: #FFFFFF">
+        <div style="max-width: 820px; margin: 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; min-width: 0">
+          <span style="flex: none; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6B7280; white-space: nowrap">Retrieval scope</span>
+          <span style="flex: none; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; font-size: 12.5px; padding: 5px 10px; border-radius: 3px; background: #F1F6F2; border: 1px solid #C2D4C8; color: #1F4A35"><span style="width: 5px; height: 5px; border-radius: 50%; background: #2F6F4F"></span>Fund — always retrieved</span>
+          <sc-for list="{{ scopeChips }}" as="c" hint-placeholder-count="3">
+            <button onClick="{{ c.toggle }}" style="flex: none; white-space: nowrap; font-size: 12.5px; padding: 5px 10px; border-radius: 3px; cursor: pointer; background: {{ c.bg }}; border: 1px solid {{ c.border }}; color: {{ c.fg }}">{{ c.label }}</button>
+          </sc-for>
+          <div style="flex: 1; min-width: 8px"></div>
+          <button onClick="{{ openGenPicker }}" style="flex: none; white-space: nowrap; padding: 6px 12px; font-size: 12.5px; font-weight: 500; color: #2F6F4F; background: #FFFFFF; border: 1px solid #C2D4C8; border-radius: 3px; cursor: pointer" style-hover="background: #F4F8F5">Generate portco brief</button>
+        </div>
+      </div>
+
+      <div style="flex: 1; padding: 30px 28px 20px">
+        <div style="max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 30px">
+
+          <sc-for list="{{ messages }}" as="m" hint-placeholder-count="4">
+            <div>
+              <sc-if value="{{ m.isUser }}" hint-placeholder-val="{{ true }}">
+                <div style="border-left: 2px solid #C9C4B6; padding: 2px 0 2px 16px">
+                  <div style="font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #9A968C; margin-bottom: 6px">Sam</div>
+                  <div style="font-size: 15.5px; line-height: 1.55; text-wrap: pretty">{{ m.text }}</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ m.isAnswer }}" hint-placeholder-val="{{ false }}">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px">
+                    <span style="font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #2F6F4F">Second Brain</span>
+                    <span style="font-size: 11.5px; color: #9A968C">{{ m.meta }}</span>
+                  </div>
+                  <sc-for list="{{ m.paragraphs }}" as="p" hint-placeholder-count="2">
+                    <p style="margin: 0 0 14px; font-family: 'Source Serif 4', Georgia, serif; font-size: 17px; line-height: 1.62; text-wrap: pretty">{{ p.text }}<sc-for list="{{ p.marks }}" as="mk" hint-placeholder-count="1"><button onClick="{{ mk.open }}" style="border: 0; background: #F1F6F2; color: #2F6F4F; font-family: 'IBM Plex Sans', sans-serif; font-size: 10.5px; font-weight: 600; line-height: 1; padding: 2px 4px; margin-left: 3px; border-radius: 2px; cursor: pointer; vertical-align: 3px" style-hover="background: #2F6F4F; color: #FFFFFF">{{ mk.n }}</button></sc-for></p>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ m.isRefusal }}" hint-placeholder-val="{{ false }}">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px">
+                    <span style="font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #2F6F4F">Second Brain</span>
+                    <span style="font-size: 11.5px; color: #9A968C">{{ m.meta }}</span>
+                  </div>
+                  <div style="background: #FBF3E4; border: 1px solid #EEDFC2; border-radius: 4px; padding: 18px 20px">
+                    <div style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #7A5410; margin-bottom: 9px">Not supported by the knowledge base</div>
+                    <p style="margin: 0 0 12px; font-family: 'Source Serif 4', Georgia, serif; font-size: 17px; line-height: 1.6; text-wrap: pretty">{{ m.text }}</p>
+                    <div style="font-size: 12.5px; color: #7A5410">{{ m.detail }}</div>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ m.isBriefStreaming }}" hint-placeholder-val="{{ false }}">
+                <div style="background: #FFFFFF; border: 1px solid #E3E0D8; border-radius: 4px">
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 13px 18px; border-bottom: 1px solid #EDEAE1">
+                    <span style="font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #2F6F4F">Portco brief</span>
+                    <span style="font-size: 12.5px; color: #1D2129">{{ m.briefOrg }}</span>
+                    <div style="flex: 1; min-width: 8px"></div>
+                    <span style="display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; color: #9A968C">
+                      <span style="width: 9px; height: 9px; border: 1.5px solid #C9C4B6; border-top-color: #2F6F4F; border-radius: 50%; display: inline-block; animation: spin 0.7s linear infinite"></span>filling templates/portco-brief.md
+                    </span>
+                  </div>
+                  <div style="padding: 18px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 1.7; white-space: pre-wrap; color: #1D2129; max-height: 300px; overflow: auto">{{ m.text }}<span style="display: inline-block; width: 2px; height: 14px; background: #2F6F4F; vertical-align: -2px; margin-left: 2px; animation: blink 1s step-end infinite"></span></div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ m.isBriefDone }}" hint-placeholder-val="{{ false }}">
+                <div style="background: #FFFFFF; border: 1px solid #E3E0D8; border-radius: 4px">
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 13px 18px; border-bottom: 1px solid #EDEAE1; background: #F4F8F5">
+                    <span style="font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #2F6F4F">Saved as a generated document</span>
+                    <div style="flex: 1; min-width: 8px"></div>
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B7280">{{ m.filename }}</span>
+                  </div>
+                  <div style="padding: 16px 18px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap">
+                    <div style="flex: 1; min-width: 200px; font-size: 13px; line-height: 1.6; color: #6B7280">{{ m.briefOrg }} · the memo is not a chat answer: read it with its citations, flags and provenance in the library. Streamed prose here is not evidence.</div>
+                    <button onClick="{{ m.openBrief }}" style="padding: 8px 14px; font-size: 12.5px; font-weight: 500; color: #FFFFFF; background: #2F6F4F; border: 0; border-radius: 3px; cursor: pointer" style-hover="background: #245840">Open the memo</button>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ m.isStreaming }}" hint-placeholder-val="{{ false }}">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px">
+                    <span style="font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #2F6F4F">Second Brain</span>
+                    <span style="display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; color: #9A968C">
+                      <span style="width: 9px; height: 9px; border: 1.5px solid #C9C4B6; border-top-color: #2F6F4F; border-radius: 50%; display: inline-block; animation: spin 0.7s linear infinite"></span>{{ m.meta }}
+                    </span>
+                  </div>
+                  <p style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 17px; line-height: 1.62; text-wrap: pretty">{{ m.text }}<span style="display: inline-block; width: 2px; height: 17px; background: #2F6F4F; vertical-align: -3px; margin-left: 2px; animation: blink 1s step-end infinite"></span></p>
+                  <div style="margin-top: 14px; font-size: 12px; color: #9A968C">Citations arrive as a closing event, once the turn completes.</div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+
+        </div>
+      </div>
+
+      <div style="position: sticky; bottom: 0; padding: 16px 28px 22px; background: #FAF8F3; border-top: 1px solid #E3E0D8">
+        <div style="max-width: 820px; margin: 0 auto">
+          <div style="display: flex; align-items: flex-end; gap: 10px; background: #FFFFFF; border: 1px solid #C9C4B6; border-radius: 4px; padding: 10px 12px">
+            <textarea value="{{ draft }}" onChange="{{ setDraft }}" onKeyDown="{{ onComposerKey }}" rows="2" placeholder="Ask about a portfolio company's leadership, a search, an assessment…" style="flex: 1; min-width: 0; border: 0; outline: none; resize: none; font-size: 14.5px; line-height: 1.5; color: #1D2129; background: transparent"></textarea>
+            <button onClick="{{ send }}" style="padding: 9px 16px; font-size: 13px; font-weight: 500; color: #FFFFFF; background: #2F6F4F; border: 0; border-radius: 3px; cursor: pointer; flex: none" style-hover="background: #245840">Ask</button>
+          </div>
+          <div style="margin-top: 8px; font-size: 11.5px; color: #9A968C">Every claim carries a passage. Questions the corpus can't answer get a stated gap, not a guess.</div>
+        </div>
+      </div>
+    </div>
+
+    <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="flex: 1 1 340px; width: 400px; max-width: 100%; border-left: 1px solid #E3E0D8; border-top: 1px solid #E3E0D8; background: #FFFFFF; display: flex; flex-direction: column">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid #EDEAE1">
+          <span style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6B7280">Source passage</span>
+          <div style="flex: 1"></div>
+          <button onClick="{{ closeDrawer }}" style="border: 0; background: transparent; font-size: 16px; line-height: 1; color: #6B7280; cursor: pointer; padding: 4px">×</button>
+        </div>
+        <div style="padding: 20px; overflow: auto; flex: 1">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; margin-bottom: 8px; word-break: break-all">{{ drawer.filename }}</div>
+          <div style="font-size: 12px; color: #6B7280; margin-bottom: 18px">{{ drawer.orgName }} · passage {{ drawer.indexLabel }} · {{ drawer.heading }}</div>
+          <div style="font-size: 11px; color: #9A968C; margin-bottom: 6px">{{ drawer.previousLabel }}</div>
+          <div style="background: #FAF8F3; border: 1px solid #E3E0D8; border-left: 2px solid #2F6F4F; border-radius: 3px; padding: 16px; font-family: 'Source Serif 4', Georgia, serif; font-size: 15px; line-height: 1.62; white-space: pre-wrap; text-wrap: pretty">{{ drawer.content }}</div>
+          <div style="font-size: 11px; color: #9A968C; margin-top: 6px">{{ drawer.nextLabel }}</div>
+          <div style="margin-top: 20px; display: flex; gap: 9px; flex-wrap: wrap">
+            <button onClick="{{ drawer.openDoc }}" style="padding: 8px 13px; font-size: 12.5px; font-weight: 500; color: #2F6F4F; background: #FFFFFF; border: 1px solid #C2D4C8; border-radius: 3px; cursor: pointer" style-hover="background: #F4F8F5">Open full document</button>
+            <button onClick="{{ closeDrawer }}" style="padding: 8px 13px; font-size: 12.5px; color: #6B7280; background: #FFFFFF; border: 1px solid #E3E0D8; border-radius: 3px; cursor: pointer">Dismiss</button>
+          </div>
+          <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid #EDEAE1; font-size: 11.5px; color: #9A968C; line-height: 1.6">Passage returned verbatim from <span style="font-family: 'IBM Plex Mono', monospace">GET /api/v1/chunks/{{ drawer.chunkShort }}?context=neighbors</span>. Overlap with neighbouring passages is included, so the text stays greppable in the source file.</div>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isDocs }}" hint-placeholder-val="{{ false }}">
+  <div style="max-width: 1440px; margin: 0 auto; padding: 26px 28px 60px">
+
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 22px">
+      <div style="display: flex; background: #FFFFFF; border: 1px solid #C9C4B6; border-radius: 3px; overflow: hidden">
+        <sc-for list="{{ sourceTabs }}" as="s" hint-placeholder-count="2">
+          <button onClick="{{ s.pick }}" style="border: 0; padding: 8px 15px; font-size: 12.5px; font-weight: 500; cursor: pointer; background: {{ s.bg }}; color: {{ s.fg }}">{{ s.label }}</button>
+        </sc-for>
+      </div>
+      <select value="{{ filters.org }}" onChange="{{ setOrgFilter }}" style="padding: 8px 10px; font-size: 12.5px; color: #1D2129; background: #FFFFFF; border: 1px solid #C9C4B6; border-radius: 3px">
+        <option value="all">All organisations</option>
+        <option value="fund">DAW Capital (Fund)</option>
+        <option value="pc1">Vantage Managed Services</option>
+        <option value="pc2">Cascade Care Group</option>
+        <option value="pc3">Ridgeline Freight &amp; Logistics</option>
+      </select>
+      <sc-if value="{{ showStatusFilter }}" hint-placeholder-val="{{ true }}">
+        <select value="{{ filters.status }}" onChange="{{ setStatusFilter }}" style="padding: 8px 10px; font-size: 12.5px; color: #1D2129; background: #FFFFFF; border: 1px solid #C9C4B6; border-radius: 3px">
+          <option value="all">Any status</option>
+          <option value="queued">Queued</option>
+          <option value="processing">Processing</option>
+          <option value="ready">Ready</option>
+          <option value="failed">Failed</option>
+        </select>
+      </sc-if>
+      <input value="{{ filters.q }}" onChange="{{ setQuery }}" placeholder="Filter by filename" style="flex: 1; min-width: 160px; max-width: 280px; padding: 8px 10px; font-size: 12.5px; color: #1D2129; background: #FFFFFF; border: 1px solid #C9C4B6; border-radius: 3px; outline: none" />
+      <div style="flex: 1; min-width: 4px"></div>
+      <button onClick="{{ ingestSeeds }}" style="padding: 8px 14px; font-size: 12.5px; font-weight: 500; color: #1D2129; background: #FFFFFF; border: 1px solid #C9C4B6; border-radius: 3px; cursor: pointer" style-hover="border-color: #1D2129">Ingest seeds</button>
+      <button onClick="{{ openModal }}" style="padding: 8px 14px; font-size: 12.5px; font-weight: 500; color: #FFFFFF; background: #2F6F4F; border: 0; border-radius: 3px; cursor: pointer" style-hover="background: #245840">Add file</button>
+    </div>
+
+    <div style="display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap">
+
+      <div style="flex: 1 1 320px; min-width: 300px; background: #FFFFFF; border: 1px solid #E3E0D8; border-radius: 4px">
+        <div style="padding: 12px 16px; border-bottom: 1px solid #EDEAE1; font-size: 12px; color: #6B7280">{{ listSummary }}</div>
+        <sc-for list="{{ visibleDocs }}" as="d" hint-placeholder-count="8">
+          <div onClick="{{ d.open }}" style="padding: 12px 16px; border-bottom: 1px solid #F3F1EA; border-left: 2px solid {{ d.selMark }}; background: {{ d.selBg }}; cursor: pointer" style-hover="background: #FCFBF7">
+            <div style="display: flex; align-items: center; gap: 9px">
+              <span style="flex: 1; min-width: 0; font-family: {{ d.nameFont }}; font-size: {{ d.nameSize }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ d.displayName }}</span>
+              <span style="flex: none; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; background: {{ d.pillBg }}; color: {{ d.pillFg }}">{{ d.status }}</span>
+            </div>
+            <div style="font-size: 11.5px; color: #6B7280; margin-top: 4px">{{ d.subline }}</div>
+          </div>
+        </sc-for>
+        <sc-if value="{{ listEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 24px 16px; font-size: 13px; color: #6B7280">No documents match this filter.</div>
+        </sc-if>
+      </div>
+
+      <div style="flex: 1.4 1 420px; min-width: 320px">
+
+        <sc-if value="{{ detail.isUploaded }}" hint-placeholder-val="{{ true }}">
+          <div style="background: #FFFFFF; border: 1px solid #E3E0D8; border-radius: 4px">
+            <div style="padding: 20px 24px; border-bottom: 1px solid #EDEAE1">
+              <div style="font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #9A968C; margin-bottom: 8px">Uploaded document</div>
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; word-break: break-all">{{ detail.filename }}</div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 18px; padding: 20px 24px; border-bottom: 1px solid #EDEAE1">
+              <sc-for list="{{ detail.meta }}" as="row" hint-placeholder-count="6">
+                <div>
+                  <div style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A968C; margin-bottom: 5px">{{ row.label }}</div>
+                  <div style="font-size: 13px; color: {{ row.tone }}">{{ row.value }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ detail.hasError }}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 16px 24px; background: #FCF4F2; border-bottom: 1px solid #EDEAE1">
+                <div style="flex: 1; min-width: 200px">
+                  <div style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #B3402F; margin-bottom: 5px">Ingest failed</div>
+                  <div style="font-size: 13.5px; color: #1D2129">{{ detail.errorMessage }}</div>
+                </div>
+                <button onClick="{{ detail.retry }}" style="padding: 8px 14px; font-size: 12.5px; font-weight: 500; color: #FFFFFF; background: #B3402F; border: 0; border-radius: 3px; cursor: pointer" style-hover="background: #94331F">Retry</button>
+              </div>
+            </sc-if>
+            <div style="padding: 20px 24px">
+              <div style="font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #9A968C; margin-bottom: 12px">Stored markdown</div>
+              <div style="background: #FAF8F3; border: 1px solid #E3E0D8; border-radius: 3px; padding: 18px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 1.7; white-space: pre-wrap; max-height: 360px; overflow: auto">{{ detail.markdown }}</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ detail.isGenerated }}" hint-placeholder-val="{{ false }}">
+          <div style="background: #FFFFFF; border: 1px solid #E3E0D8; border-radius: 4px">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 24px; border-bottom: 1px solid #EDEAE1; background: #FCFBF7">
+              <span style="font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #2F6F4F">Generated document</span>
+              <span style="font-size: 11.5px; color: #6B7280">read-only · not re-ingested into retrieval</span>
+              <div style="flex: 1; min-width: 8px"></div>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #9A968C">{{ detail.filename }}</span>
+            </div>
+
+            <div style="padding: 36px 44px 44px; max-width: 720px">
+              <div style="font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #9A968C; margin-bottom: 14px">Portco brief · 10-minute IC read</div>
+              <h1 style="margin: 0 0 18px; font-family: 'Source Serif 4', Georgia, serif; font-size: 30px; font-weight: 600; line-height: 1.2; letter-spacing: -0.015em; text-wrap: pretty">{{ detail.title }}</h1>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; padding: 16px 0 18px; border-top: 1px solid #1D2129; border-bottom: 1px solid #E3E0D8; margin-bottom: 30px">
+                <sc-for list="{{ detail.header }}" as="row" hint-placeholder-count="4">
+                  <div>
+                    <div style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A968C; margin-bottom: 5px">{{ row.label }}</div>
+                    <div style="font-size: 13px; line-height: 1.5">{{ row.value }}</div>
+                  </div>
+                </sc-for>
+              </div>
+
+              <sc-for list="{{ detail.sections }}" as="sec" hint-placeholder-count="3">
+                <div style="margin-bottom: 30px">
+                  <h2 style="margin: 0 0 12px; font-family: 'Source Serif 4', Georgia, serif; font-size: 19px; font-weight: 600; letter-spacing: -0.01em">{{ sec.heading }}</h2>
+                  <sc-for list="{{ sec.paragraphs }}" as="p" hint-placeholder-count="2">
+                    <p style="margin: 0 0 13px; font-family: 'Source Serif 4', Georgia, serif; font-size: 16.5px; line-height: 1.65; text-wrap: pretty">{{ p.text }}<sc-for list="{{ p.marks }}" as="mk" hint-placeholder-count="1"><span style="display: inline-block; font-family: 'IBM Plex Sans', sans-serif; font-size: 10.5px; font-weight: 600; color: #2F6F4F; background: #F1F6F2; padding: 2px 4px; margin-left: 3px; border-radius: 2px; vertical-align: 3px">{{ mk.n }}</span></sc-for></p>
+                  </sc-for>
+                  <sc-if value="{{ sec.isGap }}" hint-placeholder-val="{{ false }}">
+                    <div style="background: #FAF8F3; border: 1px dashed #C9C4B6; border-radius: 3px; padding: 14px 16px; font-size: 13.5px; line-height: 1.6; color: #6B7280">{{ sec.gapText }}</div>
+                  </sc-if>
+                  <sc-for list="{{ sec.evidence }}" as="e" hint-placeholder-count="2">
+                    <div style="border-left: 2px solid #2F6F4F; background: #FAF8F3; padding: 13px 16px; margin: 0 0 12px">
+                      <div style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 7px">
+                        <span style="font-size: 10.5px; font-weight: 600; color: #2F6F4F">{{ e.marker }}</span>
+                        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px">{{ e.filename }}</span>
+                        <span style="font-size: 11px; color: #6B7280">{{ e.orgLabel }} · passage {{ e.index }}</span>
+                      </div>
+                      <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 14.5px; line-height: 1.6; color: #1D2129">{{ e.content }}</div>
+                    </div>
+                  </sc-for>
+                  <sc-for list="{{ sec.flags }}" as="f" hint-placeholder-count="2">
+                    <div style="display: flex; gap: 12px; align-items: flex-start; background: #FBF3E4; border: 1px solid #EEDFC2; border-radius: 3px; padding: 13px 16px; margin-bottom: 10px">
+                      <span style="flex: none; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #7A5410; padding-top: 2px">{{ f.code }}</span>
+                      <span style="font-size: 13.5px; line-height: 1.55; color: #1D2129">{{ f.detail }}</span>
+                    </div>
+                  </sc-for>
+                  <sc-for list="{{ sec.steps }}" as="s" hint-placeholder-count="3">
+                    <div style="display: flex; gap: 12px; align-items: baseline; margin-bottom: 9px">
+                      <span style="flex: none; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9A968C">{{ s.n }}</span>
+                      <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 16px; line-height: 1.6">{{ s.text }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+
+              <div style="margin-top: 36px; padding-top: 18px; border-top: 1px solid #E3E0D8; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px">
+                <sc-for list="{{ detail.provenance }}" as="row" hint-placeholder-count="3">
+                  <div>
+                    <div style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A968C; margin-bottom: 5px">{{ row.label }}</div>
+                    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; line-height: 1.5; word-break: break-all; color: #6B7280">{{ row.value }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ detail.isEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="background: #FFFFFF; border: 1px solid #E3E0D8; border-radius: 4px; padding: 40px 28px; font-size: 13.5px; color: #6B7280">Select a document to read it.</div>
+        </sc-if>
+
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ genPickerOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; background: rgba(29, 33, 41, 0.34); display: grid; place-items: center; padding: 24px; z-index: 40">
+      <div style="width: 100%; max-width: 460px; background: #FFFFFF; border: 1px solid #E3E0D8; border-radius: 4px">
+        <div style="padding: 18px 22px; border-bottom: 1px solid #EDEAE1">
+          <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 19px; font-weight: 600">Generate a portco brief</div>
+          <div style="font-size: 12.5px; color: #6B7280; margin-top: 4px">A brief is about one portfolio company. Retrieval for it is that portco plus the fund — narrower than your chat scope.</div>
+        </div>
+        <div style="padding: 18px 22px; display: flex; flex-direction: column; gap: 9px">
+          <sc-for list="{{ genChoices }}" as="c" hint-placeholder-count="3">
+            <button onClick="{{ c.pick }}" style="display: flex; align-items: center; gap: 12px; text-align: left; padding: 13px 15px; border-radius: 3px; cursor: pointer; background: {{ c.bg }}; border: 1px solid {{ c.border }}">
+              <span style="flex: none; width: 11px; height: 11px; border-radius: 50%; border: 1px solid #2F6F4F; background: {{ c.dot }}; box-shadow: inset 0 0 0 2px #FFFFFF"></span>
+              <span style="flex: 1; min-width: 0">
+                <span style="display: block; font-size: 13.5px; color: #1D2129">{{ c.name }}</span>
+                <span style="display: block; font-size: 11.5px; color: #6B7280; margin-top: 3px">{{ c.note }}</span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; padding: 16px 22px; border-top: 1px solid #EDEAE1">
+          <button onClick="{{ closeGenPicker }}" style="padding: 8px 14px; font-size: 12.5px; color: #6B7280; background: #FFFFFF; border: 1px solid #E3E0D8; border-radius: 3px; cursor: pointer">Cancel</button>
+          <button onClick="{{ startGenerate }}" style="padding: 8px 16px; font-size: 12.5px; font-weight: 500; color: #FFFFFF; background: #2F6F4F; border: 0; border-radius: 3px; cursor: pointer" style-hover="background: #245840">Generate</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; background: rgba(29, 33, 41, 0.34); display: grid; place-items: center; padding: 24px; z-index: 40">
+      <div style="width: 100%; max-width: 440px; background: #FFFFFF; border: 1px solid #E3E0D8; border-radius: 4px">
+        <div style="padding: 18px 22px; border-bottom: 1px solid #EDEAE1">
+          <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 19px; font-weight: 600">Add a markdown file</div>
+          <div style="font-size: 12.5px; color: #6B7280; margin-top: 4px">Stored in MinIO, row inserted, queued for ingest. <span style="font-family: 'IBM Plex Mono', monospace">.md</span> only.</div>
+        </div>
+        <div style="padding: 20px 22px; display: flex; flex-direction: column; gap: 16px">
+          <div>
+            <div style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #6B7280; margin-bottom: 7px">File</div>
+            <input value="{{ upload.filename }}" onChange="{{ setUploadName }}" placeholder="reference-call-boone.md" style="width: 100%; padding: 9px 11px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; border: 1px solid #C9C4B6; border-radius: 3px; outline: none" />
+          </div>
+          <div>
+            <div style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #6B7280; margin-bottom: 7px">Organisation</div>
+            <select value="{{ upload.org }}" onChange="{{ setUploadOrg }}" style="width: 100%; padding: 9px 11px; font-size: 13px; border: 1px solid #C9C4B6; border-radius: 3px; background: #FFFFFF">
+              <option value="fund">DAW Capital (Fund)</option>
+              <option value="pc1">Vantage Managed Services</option>
+              <option value="pc2">Cascade Care Group</option>
+              <option value="pc3">Ridgeline Freight &amp; Logistics</option>
+            </select>
+          </div>
+          <sc-if value="{{ upload.hasError }}" hint-placeholder-val="{{ false }}">
+            <div style="background: #FCF4F2; border: 1px solid #E0C6C0; border-radius: 3px; padding: 11px 13px; font-size: 12.5px; color: #B3402F">{{ upload.error }}</div>
+          </sc-if>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; padding: 16px 22px; border-top: 1px solid #EDEAE1">
+          <button onClick="{{ closeModal }}" style="padding: 8px 14px; font-size: 12.5px; color: #6B7280; background: #FFFFFF; border: 1px solid #E3E0D8; border-radius: 3px; cursor: pointer">Cancel</button>
+          <button onClick="{{ submitUpload }}" style="padding: 8px 16px; font-size: 12.5px; font-weight: 500; color: #FFFFFF; background: #2F6F4F; border: 0; border-radius: 3px; cursor: pointer" style-hover="background: #245840">Add &amp; queue</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:940},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;failures present&quot;,&quot;clean pipeline&quot;],&quot;default&quot;:&quot;failures present&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Demo&quot;},&quot;streamSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:4,&quot;max&quot;:28,&quot;step&quot;:2,&quot;default&quot;:22,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Demo&quot;},&quot;showChunkCounts&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Demo&quot;}}">
+const ORGS = {
+  fund: { id: "org-fund", slug: "fund", kind: "fund", name: "DAW Capital (Fund)", short: "Fund" },
+  pc1: { id: "org-pc1", slug: "pc1", kind: "portco", name: "Vantage Managed Services", short: "Vantage" },
+  pc2: { id: "org-pc2", slug: "pc2", kind: "portco", name: "Cascade Care Group", short: "Cascade" },
+  pc3: { id: "org-pc3", slug: "pc3", kind: "portco", name: "Ridgeline Freight & Logistics", short: "Ridgeline" }
+};
+
+const PILL = {
+  queued: { bg: "#F1EFE8", fg: "#6B7280" },
+  processing: { bg: "#FBF3E4", fg: "#7A5410" },
+  ready: { bg: "#F1F6F2", fg: "#1F4A35" },
+  failed: { bg: "#FCF4F2", fg: "#B3402F" }
+};
+
+const SAMPLE_MD = `---
+portco: Vantage Managed Services
+period: Q2 2026
+owner: Hema Varadarajan
+---
+
+# Q2 2026 board deck — people section
+
+## Leadership scorecard
+
+The service-desk integration workstream remains behind the v4 plan.
+Attrition in the service desk ran 31% in Q2 against a 18% plan
+assumption, concentrated in the two acquired regional MSPs.
+
+## Open seats
+
+- CTO — incumbent, flight risk flagged by two independent references
+- VP Service Delivery — search opened 11 Aug 2026, no shortlist yet`;
+
+const UPLOADED = [
+  { id: "u1", filename: "q2-2026-board-deck.md", org: "pc1", origin: "seed", status: "ready", chunkCount: 24, updated: "08:41", created: "Sep 18", sizeBytes: 18422, attemptCount: 1, errorMessage: null },
+  { id: "u2", filename: "value-creation-plan-v4.md", org: "pc1", origin: "seed", status: "ready", chunkCount: 31, updated: "08:41", created: "Sep 18", sizeBytes: 24190, attemptCount: 1, errorMessage: null },
+  { id: "u3", filename: "leadership-assessment-2026.md", org: "pc1", origin: "seed", status: "ready", chunkCount: 19, updated: "08:40", created: "Sep 18", sizeBytes: 15003, attemptCount: 1, errorMessage: null },
+  { id: "u4", filename: "360-feedback-2025.md", org: "pc1", origin: "seed", status: "failed", chunkCount: 0, updated: "08:40", created: "Sep 18", sizeBytes: 0, attemptCount: 2, errorMessage: "File is empty." },
+  { id: "u5", filename: "target-scorecards.md", org: "pc2", origin: "seed", status: "ready", chunkCount: 22, updated: "08:39", created: "Sep 18", sizeBytes: 16880, attemptCount: 1, errorMessage: null },
+  { id: "u6", filename: "leadership-assessment-2026.md", org: "pc2", origin: "seed", status: "ready", chunkCount: 27, updated: "08:39", created: "Sep 18", sizeBytes: 21044, attemptCount: 1, errorMessage: null },
+  { id: "u7", filename: "q2-2026-board-update.md", org: "pc2", origin: "seed", status: "processing", chunkCount: 0, updated: "08:47", created: "Sep 18", sizeBytes: 9120, attemptCount: 1, errorMessage: null },
+  { id: "u8", filename: "reference-call-boone-2026-09.md", org: "pc2", origin: "upload", status: "failed", chunkCount: 0, updated: "08:36", created: "Sep 18", sizeBytes: 4310, attemptCount: 1, errorMessage: "Embedding failed. Retry the document." },
+  { id: "u9", filename: "competency-framework.md", org: "pc3", origin: "seed", status: "ready", chunkCount: 14, updated: "08:35", created: "Sep 18", sizeBytes: 11290, attemptCount: 1, errorMessage: null },
+  { id: "u10", filename: "org-due-diligence-2024.md", org: "pc3", origin: "seed", status: "queued", chunkCount: 0, updated: "08:48", created: "Sep 18", sizeBytes: 13400, attemptCount: 1, errorMessage: null },
+  { id: "u11", filename: "portfolio-talent-thesis.md", org: "fund", origin: "seed", status: "ready", chunkCount: 17, updated: "08:33", created: "Sep 18", sizeBytes: 12880, attemptCount: 1, errorMessage: null },
+  { id: "u12", filename: "fund-strategy-and-thesis.md", org: "fund", origin: "seed", status: "ready", chunkCount: 21, updated: "08:33", created: "Sep 18", sizeBytes: 15740, attemptCount: 1, errorMessage: null },
+  { id: "u13", filename: "firm-overview-and-team.md", org: "fund", origin: "seed", status: "ready", chunkCount: 12, updated: "08:32", created: "Sep 18", sizeBytes: 8990, attemptCount: 1, errorMessage: null }
+];
+
+const CHUNKS = {
+  c1: { id: "c1", docId: "u1", index: 6, count: 24, heading: "Leadership scorecard", content: "Attrition in the service desk ran 31% in Q2 against a plan assumption of 18%, concentrated in the two acquired regional MSPs. The integration workstream owner has been unfilled since April." },
+  c2: { id: "c2", docId: "u3", index: 11, count: 19, heading: "CTO — retention risk", content: "Two independent references describe the CTO as \"actively in market\". The assessor notes no retention conversation has been held since the 2023 close, and no equity refresh is scheduled." },
+  c3: { id: "c3", docId: "u2", index: 3, count: 31, heading: "Workstream 2 — platform consolidation", content: "Platform consolidation carries $4.1M of the $11.3M EV plan and is gated on a single technical owner. The plan names the CTO as accountable executive for FY26 and FY27." },
+  c4: { id: "c4", docId: "u11", index: 5, count: 17, heading: "Single-threaded technical owners", content: "Where a value-creation workstream depends on one technical owner, the fund's standing expectation is a named deputy inside two quarters of close. Vantage is the open exception." },
+  c5: { id: "c5", docId: "u6", index: 9, count: 27, heading: "COO — retention", content: "The COO is rated 4/5 on operating delivery and 2/5 on succession depth. Retention risk is described as the critical people exposure for the Cascade plan." },
+  c6: { id: "c6", docId: "u5", index: 2, count: 22, heading: "Scorecard — VP Revenue Cycle", content: "The VP Revenue Cycle scorecard requires demonstrated payer-mix turnaround at $150M+ revenue. Two of three panel interviewers scored the incumbent below the bar on this competency." }
+};
+
+const GENERATED = [
+  {
+    id: "g1",
+    filename: "pc1-portco-brief-2026-09-18.md",
+    title: "Vantage Managed Services — leadership vs plan",
+    org: "pc1",
+    created: "18 Sep 2026, 08:52",
+    createdByLabel: "Sam Iyer",
+    sourceCount: 6,
+    flags: [
+      { code: "single_source", detail: "The CTO flight-risk conclusion rests on one assessment document; the two references it cites are inside that same file.", section: "Flags" },
+      { code: "stale_evidence", detail: "The most recent 360 for the service-desk leadership group is from 2025 and failed ingest — the 2026 file has not been uploaded.", section: "Flags" }
+    ],
+    header: [
+      { label: "Generated", value: "18 Sep 2026, 08:52" },
+      { label: "For", value: "Dana Deline — IC / board" },
+      { label: "Scope", value: "Vantage Managed Services ∪ Fund" },
+      { label: "Sources", value: "6 documents · 14 passages" }
+    ],
+    provenance: [
+      { label: "Prompt", value: "llm-prompts/v1/portco-brief.md" },
+      { label: "Template", value: "templates/portco-brief.md" },
+      { label: "Object key", value: "generated/pc1/g1/pc1-portco-brief-2026-09-18.md" }
+    ],
+    sections: [
+      {
+        heading: "Team vs value-creation plan",
+        paragraphs: [
+          { text: "The v4 plan carries $11.3M of enterprise value across four workstreams. Platform consolidation is the largest at $4.1M and names the CTO as its accountable executive for FY26 and FY27.", marks: [{ n: 3 }] },
+          { text: "Two of the four workstreams have no named deputy. The fund's own talent thesis sets a two-quarter deadline for a deputy behind any single-threaded technical owner; Vantage is recorded as the open exception.", marks: [{ n: 4 }] },
+          { text: "The VP Service Delivery seat has been open since 11 August 2026 with no shortlist, leaving the service-desk integration workstream without an owner since April.", marks: [{ n: 1 }] }
+        ]
+      },
+      {
+        heading: "What's working / what's yellow or red",
+        paragraphs: [
+          { text: "Working: operating delivery against the consolidation milestones is on plan through Q2, and the competency framework is applied consistently across the two acquired MSPs.", marks: [] },
+          { text: "Red: service-desk attrition ran 31% in Q2 against an 18% plan assumption, concentrated in the acquired regionals.", marks: [{ n: 1 }] },
+          { text: "Red: the CTO is described by two references as actively in market, with no retention conversation since the 2023 close and no scheduled equity refresh.", marks: [{ n: 2 }] }
+        ]
+      },
+      {
+        heading: "Evidence",
+        evidence: [
+          { marker: "1", filename: "q2-2026-board-deck.md", orgLabel: "Vantage", index: 6, content: "Attrition in the service desk ran 31% in Q2 against a plan assumption of 18%, concentrated in the two acquired regional MSPs. The integration workstream owner has been unfilled since April." },
+          { marker: "2", filename: "leadership-assessment-2026.md", orgLabel: "Vantage", index: 11, content: "Two independent references describe the CTO as \"actively in market\". The assessor notes no retention conversation has been held since the 2023 close, and no equity refresh is scheduled." },
+          { marker: "3", filename: "value-creation-plan-v4.md", orgLabel: "Vantage", index: 3, content: "Platform consolidation carries $4.1M of the $11.3M EV plan and is gated on a single technical owner. The plan names the CTO as accountable executive for FY26 and FY27." },
+          { marker: "4", filename: "portfolio-talent-thesis.md", orgLabel: "Fund", index: 5, content: "Where a value-creation workstream depends on one technical owner, the fund's standing expectation is a named deputy inside two quarters of close. Vantage is the open exception." }
+        ]
+      },
+      {
+        heading: "Flags",
+        flags: [
+          { code: "single_source", detail: "The CTO flight-risk conclusion rests on one assessment document; the two references it cites sit inside that same file. Treat as one independent source, not two." },
+          { code: "stale_evidence", detail: "The most recent ingested 360 for service-desk leadership is from 2025 and failed ingest (file is empty). The 2026 file has not been uploaded." }
+        ]
+      },
+      {
+        heading: "Suggested next steps",
+        steps: [
+          { n: "01", text: "Hold the CTO retention conversation before the November board; bring an equity-refresh option to IC." },
+          { n: "02", text: "Name a deputy for platform consolidation, or move the workstream's accountable executive." },
+          { n: "03", text: "Re-upload the 2026 service-desk 360 so the attrition read has a second independent source." }
+        ]
+      }
+    ]
+  },
+  {
+    id: "g2",
+    filename: "pc2-portco-brief-2026-09-17.md",
+    title: "Cascade Care Group — leadership vs plan",
+    org: "pc2",
+    created: "17 Sep 2026, 16:20",
+    createdByLabel: "Sam Iyer",
+    sourceCount: 4,
+    flags: [{ code: "section_gap", detail: "No ingested document covers the revenue-cycle workstream's staffing plan.", section: "Team vs value-creation plan" }],
+    header: [
+      { label: "Generated", value: "17 Sep 2026, 16:20" },
+      { label: "For", value: "Dana Deline — IC / board" },
+      { label: "Scope", value: "Cascade Care Group ∪ Fund" },
+      { label: "Sources", value: "4 documents · 9 passages" }
+    ],
+    provenance: [
+      { label: "Prompt", value: "llm-prompts/v1/portco-brief.md" },
+      { label: "Template", value: "templates/portco-brief.md" },
+      { label: "Object key", value: "generated/pc2/g2/pc2-portco-brief-2026-09-17.md" }
+    ],
+    sections: [
+      {
+        heading: "Team vs value-creation plan",
+        paragraphs: [
+          { text: "The COO is rated 4/5 on operating delivery and 2/5 on succession depth, and retention is recorded as the critical people exposure for the plan.", marks: [{ n: 1 }] }
+        ],
+        isGap: true,
+        gapText: "The knowledge base does not support a seat-by-seat read against the revenue-cycle workstream. The Q2 board update is still processing and no staffing plan document has been ingested. Heading kept; gap stated."
+      },
+      {
+        heading: "What's working / what's yellow or red",
+        paragraphs: [
+          { text: "Yellow: two of three panel interviewers scored the incumbent VP Revenue Cycle below the scorecard bar on payer-mix turnaround at $150M+ revenue.", marks: [{ n: 2 }] }
+        ]
+      },
+      {
+        heading: "Evidence",
+        evidence: [
+          { marker: "1", filename: "leadership-assessment-2026.md", orgLabel: "Cascade", index: 9, content: "The COO is rated 4/5 on operating delivery and 2/5 on succession depth. Retention risk is described as the critical people exposure for the Cascade plan." },
+          { marker: "2", filename: "target-scorecards.md", orgLabel: "Cascade", index: 2, content: "The VP Revenue Cycle scorecard requires demonstrated payer-mix turnaround at $150M+ revenue. Two of three panel interviewers scored the incumbent below the bar on this competency." }
+        ]
+      },
+      {
+        heading: "Flags",
+        flags: [{ code: "section_gap", detail: "One template section could not be grounded. Do not read the omission as an absence of risk." }]
+      },
+      {
+        heading: "Suggested next steps",
+        steps: [
+          { n: "01", text: "Ingest the revenue-cycle staffing plan, then regenerate before the board pack closes." },
+          { n: "02", text: "Schedule the COO succession-depth review with Hema." }
+        ]
+      }
+    ]
+  }
+];
+
+const ANSWER_1 = [
+  { text: "Two documents carry the CTO read. The 2026 leadership assessment records two independent references describing the CTO as actively in market, with no retention conversation since the 2023 close and no scheduled equity refresh.", marks: [2] },
+  { text: "The exposure is concentrated: platform consolidation carries $4.1M of the $11.3M value-creation plan and names the CTO as its accountable executive for FY26 and FY27, with no named deputy. The fund's own talent thesis expects a deputy inside two quarters of close and records Vantage as the open exception.", marks: [3, 4] },
+  { text: "Alongside it, service-desk attrition ran 31% in Q2 against an 18% plan assumption, and the integration workstream owner seat has been unfilled since April.", marks: [1] }
+];
+
+const BRIEF_STREAM = (name) => `# ${name} — leadership vs plan
+
+**Generated:** 18 Sep 2026  **For:** Dana Deline (IC / board)
+
+## Team vs value-creation plan
+
+The plan carries four workstreams; two have no named deputy behind a
+single technical owner. The largest workstream names the incumbent CTO
+as accountable executive for FY26 and FY27.
+
+## What's working / what's yellow or red
+
+Working: delivery against consolidation milestones is on plan through Q2.
+Red: service-desk attrition ran 31% against an 18% plan assumption.
+
+## Evidence
+
+## Flags
+
+## Suggested next steps`;
+
+const CANNED_STREAM = "Three ingested documents speak to this. The 2026 leadership assessment rates the COO 4/5 on operating delivery and 2/5 on succession depth, and names retention as the critical people exposure for the plan. The target scorecards show two of three panel interviewers scoring the incumbent VP Revenue Cycle below the bar on payer-mix turnaround. The Q2 board update is still processing, so nothing in it is retrievable yet.";
+
+class Component extends DCLogic {
+  state = {
+    screen: "dashboard",
+    docs: UPLOADED.map((d) => Object.assign({}, d)),
+    scopes: ["pc1"],
+    genPickerOpen: false,
+    genPortco: "pc1",
+    genPhase: null,
+    genText: "",
+    drawerId: null,
+    draft: "",
+    streamText: "",
+    streaming: false,
+    extraTurn: null,
+    filters: { source: "uploaded", org: "all", status: "all", q: "" },
+    selectedId: "g1",
+    modalOpen: false,
+    upload: { filename: "", org: "pc1", error: "" },
+    lastEvent: "08:48"
+  };
+
+  componentWillUnmount() {
+    clearInterval(this._timer);
+    clearInterval(this._genTimer);
+  }
+
+  go = (screen) => () => this.setState({ screen });
+
+  patchDoc(id, patch) {
+    this.setState((s) => ({ docs: s.docs.map((d) => (d.id === id ? Object.assign({}, d, patch) : d)) }));
+  }
+
+  advance(id) {
+    this.patchDoc(id, { status: "queued", errorMessage: null, chunkCount: 0, updated: "now" });
+    setTimeout(() => this.patchDoc(id, { status: "processing", updated: "now" }), 900);
+    setTimeout(() => this.patchDoc(id, { status: "ready", chunkCount: 12 + Math.floor(Math.random() * 18), updated: "now" }), 2600);
+  }
+
+  retry = (id) => () => {
+    this.setState((s) => ({
+      docs: s.docs.map((d) => (d.id === id ? Object.assign({}, d, { attemptCount: d.attemptCount + 1 }) : d)),
+      lastEvent: "now"
+    }));
+    this.advance(id);
+  };
+
+  retryAll = () => {
+    this.state.docs.filter((d) => d.status === "failed").forEach((d) => this.retry(d.id)());
+  };
+
+  ingestSeeds = () => {
+    const seeds = [
+      { filename: "interview-notes-exec-panel.md", org: "pc3" },
+      { filename: "360-feedback-2026.md", org: "pc3" },
+      { filename: "portfolio-construction-and-ev.md", org: "fund" }
+    ];
+    const rows = seeds.map((s, i) => ({
+      id: "s" + Date.now() + i,
+      filename: s.filename,
+      org: s.org,
+      origin: "seed",
+      status: "queued",
+      chunkCount: 0,
+      updated: "now",
+      created: "Sep 18",
+      sizeBytes: 9000 + i * 1200,
+      attemptCount: 1,
+      errorMessage: null
+    }));
+    this.setState((s) => ({ docs: rows.concat(s.docs), lastEvent: "now" }));
+    rows.forEach((r, i) => setTimeout(() => this.advance(r.id), i * 500));
+  };
+
+  openModal = () => this.setState({ modalOpen: true, upload: { filename: "", org: "pc1", error: "" } });
+  closeModal = () => this.setState({ modalOpen: false });
+  setUploadName = (e) => this.setState((s) => ({ upload: Object.assign({}, s.upload, { filename: e.target.value, error: "" }) }));
+  setUploadOrg = (e) => this.setState((s) => ({ upload: Object.assign({}, s.upload, { org: e.target.value }) }));
+
+  submitUpload = () => {
+    const { filename, org } = this.state.upload;
+    const name = filename.trim();
+    if (!name) return this.setState((s) => ({ upload: Object.assign({}, s.upload, { error: "Pick a file." }) }));
+    if (!/\.md$/i.test(name)) {
+      return this.setState((s) => ({
+        upload: Object.assign({}, s.upload, { error: "415 unsupported_media_type — only markdown (.md) files can be ingested." })
+      }));
+    }
+    const row = {
+      id: "n" + Date.now(),
+      filename: name,
+      org,
+      origin: "upload",
+      status: "queued",
+      chunkCount: 0,
+      updated: "now",
+      created: "Sep 18",
+      sizeBytes: 5120,
+      attemptCount: 1,
+      errorMessage: null
+    };
+    this.setState((s) => ({ docs: [row].concat(s.docs), modalOpen: false, lastEvent: "now" }));
+    this.advance(row.id);
+  };
+
+  toggleScope = (slug) => () =>
+    this.setState((s) => ({
+      scopes: s.scopes.includes(slug) ? s.scopes.filter((x) => x !== slug) : s.scopes.concat(slug)
+    }));
+
+  openGenPicker = () =>
+    this.setState((s) => ({ genPickerOpen: true, genPortco: s.scopes[0] || "pc1" }));
+  closeGenPicker = () => this.setState({ genPickerOpen: false });
+  setGenPortco = (slug) => () => this.setState({ genPortco: slug });
+
+  startGenerate = () => {
+    const speed = Number(this.props.streamSpeed ?? 22);
+    const md = BRIEF_STREAM(ORGS[this.state.genPortco].name);
+    this.setState({ genPickerOpen: false, genPhase: "streaming", genText: "" });
+    let i = 0;
+    clearInterval(this._genTimer);
+    this._genTimer = setInterval(() => {
+      i += 6;
+      if (i >= md.length) {
+        clearInterval(this._genTimer);
+        this.setState({ genText: md, genPhase: "done" });
+        return;
+      }
+      this.setState({ genText: md.slice(0, i) });
+    }, Math.max(4, 120 - speed * 4));
+  };
+
+  setDraft = (e) => this.setState({ draft: e.target.value });
+
+  onComposerKey = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      this.send();
+    }
+  };
+
+  send = () => {
+    const q = this.state.draft.trim();
+    if (!q || this.state.streaming) return;
+    const speed = Number(this.props.streamSpeed ?? 22);
+    this.setState({ draft: "", streaming: true, streamText: "", extraTurn: { question: q } });
+    let i = 0;
+    clearInterval(this._timer);
+    this._timer = setInterval(() => {
+      i += 3;
+      if (i >= CANNED_STREAM.length) {
+        clearInterval(this._timer);
+        this.setState({ streamText: CANNED_STREAM, streaming: false });
+        return;
+      }
+      this.setState({ streamText: CANNED_STREAM.slice(0, i) });
+    }, Math.max(4, 120 - speed * 4));
+  };
+
+  openChunk = (chunkId) => () => this.setState({ drawerId: chunkId, screen: "chat" });
+  closeDrawer = () => this.setState({ drawerId: null });
+
+  pickSource = (source) => () =>
+    this.setState((s) => ({ filters: Object.assign({}, s.filters, { source, status: "all" }), selectedId: source === "generated" ? "g1" : "u1" }));
+
+  setOrgFilter = (e) => this.setState((s) => ({ filters: Object.assign({}, s.filters, { org: e.target.value }) }));
+  setStatusFilter = (e) => this.setState((s) => ({ filters: Object.assign({}, s.filters, { status: e.target.value }) }));
+  setQuery = (e) => this.setState((s) => ({ filters: Object.assign({}, s.filters, { q: e.target.value }) }));
+
+  openDoc = (id, source) => () =>
+    this.setState((s) => ({
+      screen: "documents",
+      selectedId: id,
+      drawerId: null,
+      filters: Object.assign({}, s.filters, { source, status: "all", q: "" })
+    }));
+
+  decorate(d) {
+    const pill = PILL[d.status];
+    const zeroReady = d.status === "ready" && d.chunkCount === 0;
+    return Object.assign({}, d, {
+      orgLabel: ORGS[d.org].short,
+      orgName: ORGS[d.org].name,
+      originLabel: d.origin === "seed" ? "seeded" : "uploaded",
+      pillBg: pill.bg,
+      pillFg: pill.fg,
+      errorTone: "#B3402F",
+      chunkLabel: this.props.showChunkCounts === false ? "—" : d.status === "ready" ? String(d.chunkCount) : "—",
+      chunkTone: zeroReady ? "#B3402F" : "#6B7280",
+      retry: this.retry(d.id),
+      open: this.openDoc(d.id, "uploaded")
+    });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const clean = this.props.demoState === "clean pipeline";
+    const docs = clean ? s.docs.map((d) => (d.status === "failed" ? Object.assign({}, d, { status: "ready", chunkCount: 16, errorMessage: null }) : d)) : s.docs;
+    const decorated = docs.map((d) => this.decorate(d));
+    const needsMe = decorated.filter((d) => d.status === "failed");
+
+    const tabs = [
+      { key: "dashboard", label: "Dashboard" },
+      { key: "chat", label: "Chat" },
+      { key: "documents", label: "Documents" }
+    ].map((t) => ({
+      label: t.label,
+      go: this.go(t.key),
+      fg: s.screen === t.key ? "#1D2129" : "#6B7280",
+      rule: s.screen === t.key ? "inset 0 -2px 0 0 #2F6F4F" : "none"
+    }));
+
+    const scopeList = s.scopes.map((x) => ORGS[x].short);
+    const scopeChips = ["pc1", "pc2", "pc3"].map((slug) => {
+      const on = s.scopes.includes(slug);
+      return {
+        label: ORGS[slug].short,
+        toggle: this.toggleScope(slug),
+        bg: on ? "#2F6F4F" : "#FFFFFF",
+        border: on ? "#2F6F4F" : "#C9C4B6",
+        fg: on ? "#FFFFFF" : "#1D2129"
+      };
+    });
+
+    const cite = (chunkId, marker) => {
+      const c = CHUNKS[chunkId];
+      const doc = UPLOADED.find((d) => d.id === c.docId);
+      return {
+        marker: String(marker),
+        filename: doc.filename,
+        orgLabel: ORGS[doc.org].short,
+        open: this.openChunk(chunkId)
+      };
+    };
+
+    const answer1Cites = [cite("c1", 1), cite("c2", 2), cite("c3", 3), cite("c4", 4)];
+    const messages = [
+      {
+        isUser: true,
+        text: "Vantage's CTO is flagged as a flight risk. What do we actually know, and what does it put at risk in the plan?"
+      },
+      {
+        isAnswer: true,
+        meta: "Vantage ∪ Fund · 14 passages retrieved · 4 cited",
+        paragraphs: ANSWER_1.map((p) => ({
+          text: p.text,
+          marks: p.marks.map((n) => ({ n: String(n), open: this.openChunk("c" + n) }))
+        })),
+        citations: answer1Cites,
+        citationCount: "4 passages, 4 documents"
+      },
+      {
+        isUser: true,
+        text: "Has Ridgeline named an internal successor to the founder-CEO?"
+      },
+      {
+        isRefusal: true,
+        meta: "Ridgeline ∪ Fund · 0 passages above threshold",
+        text: "Nothing in the ingested corpus names an internal successor for the Ridgeline founder-CEO. The competency framework and the 2024 org due-diligence are ingested, but neither records a succession candidate.",
+        detail: "No citation, no claim. Ingest the succession planning document, or ask about what is here: the framework, the 2026 assessment, the Q2 board deck."
+      }
+    ];
+
+    if (s.extraTurn) {
+      messages.push({ isUser: true, text: s.extraTurn.question });
+      if (s.streaming) {
+        messages.push({ isStreaming: true, meta: "retrieving · streaming answer tokens", text: s.streamText });
+      } else {
+        messages.push({
+          isAnswer: true,
+          meta: (scopeList.length ? scopeList.join(" + ") + " ∪ Fund" : "Fund only") + " · 9 passages retrieved · 2 cited",
+          paragraphs: [{ text: s.streamText, marks: [{ n: "1", open: this.openChunk("c5") }, { n: "2", open: this.openChunk("c6") }] }],
+          citations: [cite("c5", 1), cite("c6", 2)],
+          citationCount: "2 passages, 2 documents"
+        });
+      }
+    }
+
+    if (s.genPhase === "streaming") {
+      messages.push({ isBriefStreaming: true, briefOrg: ORGS[s.genPortco].name, text: s.genText });
+    } else if (s.genPhase === "done") {
+      messages.push({
+        isBriefDone: true,
+        briefOrg: ORGS[s.genPortco].name,
+        text: s.genText,
+        filename: s.genPortco + "-portco-brief-2026-09-18.md",
+        openBrief: this.openDoc(s.genPortco === "pc2" ? "g2" : "g1", "generated")
+      });
+    }
+
+    const dc = s.drawerId ? CHUNKS[s.drawerId] : null;
+    const dcDoc = dc ? UPLOADED.find((d) => d.id === dc.docId) : null;
+
+    const f = s.filters;
+    const uploadedList = decorated
+      .filter((d) => (f.org === "all" ? true : d.org === f.org))
+      .filter((d) => (f.status === "all" ? true : d.status === f.status))
+      .filter((d) => d.filename.toLowerCase().includes(f.q.trim().toLowerCase()))
+      .map((d) =>
+        Object.assign({}, d, {
+          displayName: d.filename,
+          nameFont: "'IBM Plex Mono', monospace",
+          nameSize: "12.5px",
+          subline: d.orgName + " · " + d.originLabel + " · " + (d.status === "ready" ? d.chunkCount + " passages" : d.status),
+          selMark: s.selectedId === d.id ? "#2F6F4F" : "transparent",
+          selBg: s.selectedId === d.id ? "#F8F7F2" : "#FFFFFF"
+        })
+      );
+
+    const generatedList = GENERATED.filter((g) => (f.org === "all" ? true : g.org === f.org))
+      .filter((g) => (g.filename + " " + g.title).toLowerCase().includes(f.q.trim().toLowerCase()))
+      .map((g) => ({
+        displayName: g.title,
+        nameFont: "'Source Serif 4', Georgia, serif",
+        nameSize: "15px",
+        status: "ready",
+        pillBg: PILL.ready.bg,
+        pillFg: PILL.ready.fg,
+        subline: ORGS[g.org].name + " · " + g.created + " · " + g.sourceCount + " sources",
+        selMark: s.selectedId === g.id ? "#2F6F4F" : "transparent",
+        selBg: s.selectedId === g.id ? "#F8F7F2" : "#FFFFFF",
+        open: this.openDoc(g.id, "generated")
+      }));
+
+    const isGenView = f.source === "generated";
+    const visibleDocs = isGenView ? generatedList : uploadedList;
+
+    let detail = { isEmpty: true };
+    const selGen = GENERATED.find((g) => g.id === s.selectedId);
+    const selUp = decorated.find((d) => d.id === s.selectedId);
+    if (isGenView && selGen) {
+      detail = Object.assign({ isGenerated: true }, selGen);
+    } else if (!isGenView && selUp) {
+      detail = {
+        isUploaded: true,
+        filename: selUp.filename,
+        hasError: !!selUp.errorMessage,
+        errorMessage: selUp.errorMessage,
+        retry: selUp.retry,
+        markdown: selUp.status === "ready" ? SAMPLE_MD : selUp.errorMessage ? "// object stored, no text extracted" : "// awaiting worker",
+        meta: [
+          { label: "Organisation", value: selUp.orgName, tone: "#1D2129" },
+          { label: "Origin", value: selUp.originLabel, tone: "#1D2129" },
+          { label: "Status", value: selUp.status, tone: selUp.status === "failed" ? "#B3402F" : "#1D2129" },
+          { label: "Passages", value: selUp.status === "ready" ? String(selUp.chunkCount) : "0", tone: selUp.status === "ready" ? "#1D2129" : "#6B7280" },
+          { label: "Size", value: (selUp.sizeBytes / 1024).toFixed(1) + " KB", tone: "#1D2129" },
+          { label: "Attempts", value: String(selUp.attemptCount), tone: "#1D2129" }
+        ]
+      };
+    }
+
+    const statusCounts = ["queued", "processing", "ready", "failed"]
+      .map((k) => ({ k, n: decorated.filter((d) => d.status === k).length }))
+      .filter((x) => x.n > 0)
+      .map((x) => x.n + " " + x.k)
+      .join(" · ");
+
+    return {
+      tabs,
+      isDash: s.screen === "dashboard",
+      isChat: s.screen === "chat",
+      isDocs: s.screen === "documents",
+      lastEvent: s.lastEvent,
+      needsMe,
+      hasNeedsMe: needsMe.length > 0,
+      noNeedsMe: needsMe.length === 0,
+      needsMeCount: needsMe.length === 0 ? "clear" : needsMe.length + (needsMe.length === 1 ? " document" : " documents"),
+      needsMeTone: needsMe.length ? "#B3402F" : "#6B7280",
+      retryAll: this.retryAll,
+      pipeline: decorated,
+      pipelineSummary: statusCounts,
+      generated: GENERATED.map((g) => ({
+        title: g.title,
+        orgLabel: ORGS[g.org].name,
+        created: g.created,
+        createdByLabel: g.createdByLabel,
+        sourceCount: g.sourceCount,
+        flags: g.flags,
+        open: this.openDoc(g.id, "generated")
+      })),
+      goDocs: this.go("documents"),
+      ingestSeeds: this.ingestSeeds,
+      openModal: this.openModal,
+      closeModal: this.closeModal,
+      modalOpen: s.modalOpen,
+      upload: Object.assign({}, s.upload, { hasError: !!s.upload.error }),
+      setUploadName: this.setUploadName,
+      setUploadOrg: this.setUploadOrg,
+      submitUpload: this.submitUpload,
+      scopeChips,
+      scopeNote: scopeList.length
+        ? scopeList.join(" + ") + " ∪ Fund — " + (scopeList.length + 1) + " organisations in the retrieve set"
+        : "No portco selected — fund only.",
+      openGenPicker: this.openGenPicker,
+      closeGenPicker: this.closeGenPicker,
+      genPickerOpen: s.genPickerOpen,
+      startGenerate: this.startGenerate,
+      genChoices: ["pc1", "pc2", "pc3"].map((slug) => {
+        const on = s.genPortco === slug;
+        return {
+          name: ORGS[slug].name,
+          note: on ? "retrieve scope: " + ORGS[slug].short + " ∪ Fund" : "",
+          pick: this.setGenPortco(slug),
+          bg: on ? "#F4F8F5" : "#FFFFFF",
+          border: on ? "#2F6F4F" : "#E3E0D8",
+          dot: on ? "#2F6F4F" : "#FFFFFF"
+        };
+      }),
+      messages,
+      draft: s.draft,
+      setDraft: this.setDraft,
+      onComposerKey: this.onComposerKey,
+      send: this.send,
+      drawerOpen: !!dc,
+      closeDrawer: this.closeDrawer,
+      drawer: dc
+        ? {
+            filename: dcDoc.filename,
+            orgName: ORGS[dcDoc.org].name,
+            indexLabel: dc.index + " of " + dc.count,
+            heading: dc.heading,
+            content: dc.content,
+            previousLabel: "… passage " + (dc.index - 1) + " ends here",
+            nextLabel: "passage " + (dc.index + 1) + " continues …",
+            chunkShort: dc.id,
+            openDoc: this.openDoc(dc.docId, "uploaded")
+          }
+        : {},
+      sourceTabs: [
+        { label: "Uploaded & seeded", key: "uploaded" },
+        { label: "Generated", key: "generated" }
+      ].map((t) => ({
+        label: t.label,
+        pick: this.pickSource(t.key),
+        bg: f.source === t.key ? "#1D2129" : "#FFFFFF",
+        fg: f.source === t.key ? "#FFFFFF" : "#6B7280"
+      })),
+      filters: f,
+      showStatusFilter: !isGenView,
+      setOrgFilter: this.setOrgFilter,
+      setStatusFilter: this.setStatusFilter,
+      setQuery: this.setQuery,
+      visibleDocs,
+      listEmpty: visibleDocs.length === 0,
+      listSummary: visibleDocs.length + (isGenView ? " generated brief" : " uploaded document") + (visibleDocs.length === 1 ? "" : "s"),
+      detail
+    };
+  }
+}
+
+</script>
+</body>
+</html>

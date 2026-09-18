@@ -9,11 +9,24 @@ Keep this as you go, not from memory at the end. Alongside your code and [PROMPT
 Exact steps from a clean clone. We follow these literally.
 
 ```
+cp .env.example .env
 make up
-# then …
+
+# Development endpoints
+# Frontend:    http://localhost:5173
+# API health:  http://localhost:3000/health
+# API docs:    http://localhost:3000/api-docs.html
+# MinIO:       http://localhost:9001
+
+# Verification
+make build
+make typecheck
+make lint
+make test
 ```
 
 <!-- agent-reminders:run -->
+- 2026-09-18 — *bootstrap:* `cp .env.example .env && make up` starts frontend, API, idle worker, Postgres, MinIO, and ElasticMQ. Product schema, bucket, queue, and features remain uninitialized.
 <!-- /agent-reminders:run -->
 
 ## The use case I chose
@@ -116,6 +129,18 @@ One block per significant decision (the checkpoint ones at minimum — use case,
 - **What I gave up:** Hema-only briefing queue; a partner command center; vanity counters.
 - **In your own words (typed by you, not your agent):**
 
+### Decision: repo layout
+- **The call:** Git monorepo with `apps/backend` (Fastify `src/api` + ingest `src/worker` + `src/common` + `test/`) and `apps/frontend` (Vite SPA). No Turbo/Nx; no extra `packages/*`. Anthropic prompts stay in `llm-prompts/v1/`, not `apps/backend/src/prompts/`. Detail: `REPO_ARCHITECTURE.md`.
+- **Said at the time:** "I was thinking something like that." / `apps/backend/` `src/` `api/` `worker/` `common/` `schemas/` `database/` `helpers/` `services/` `prompts/` / `apps/frontend/` `src/` `components/` `constants/` `hooks/` `data/` `ui/` `pages/` `schemas/` `helpers/` / "an important part is missing in the backend architecture, the /test folder."
+- **What I gave up:** Separate `apps/api` + `apps/worker` packages; a shared `packages/` workspace on day one; colocating `*.test.ts` under `src/`.
+- **In your own words (typed by you, not your agent):**
+
+### Decision: bootstrap runtime
+- **The call:** Root npm workspaces; Docker Compose runs frontend, API, idle worker, and all backing services. `make up` is the only startup command. Bootstrap does not create the Prisma schema, MinIO bucket, ElasticMQ queue, or product features.
+- **Said at the time:** "Root npm workspaces for frontend/backend (Recommended)" / "Start apps + backing services; API/worker health checks only (Recommended)"
+- **What I gave up:** Separate npm installs and application resource initialization during bootstrap.
+- **In your own words (typed by you, not your agent):**
+
 <!-- agent-reminders:decisions -->
 - 2026-09-18 — *use case:* portco brief for Dana (~10 min, IC/board). "ok let's go with \"portco brief\"".
 - 2026-09-18 — *trust surface (Dana):* template + citations/metadata/flags/next steps. Not Sam’s scratch draft.
@@ -134,6 +159,10 @@ One block per significant decision (the checkpoint ones at minimum — use case,
 - 2026-09-18 — *stream UX:* Anthropic SSE → API → FE typing effect; citations at end of turn. "nice typing effect to write response nicely when streaming"
 - 2026-09-18 — *dashboard:* Sam’s morning (**S**). "S"
 - 2026-09-18 — *process topology:* React FE + Fastify API + ingest **worker** behind ElasticMQ + pgvector + MinIO. Documented in `ARCHITECTURE.md`. "We will have a FE in React, an API, a worker for document ingestion behind an ElasticMQ, a pgvector, a minio."
+- 2026-09-18 — *HTTP + worker contract:* `API_SPECS.md` — `/api/v1` routes, SSE shapes, and ingest worker (queue `ingest`, `{ documentId }`, status machine, chunk/embed). "write a file API_SPECS.md with all the api route we will need to build" / "API_SPECS should also contains the SPECS for the ingestion worker"
+- 2026-09-18 — *repo layout:* one git monorepo; `apps/backend` (`api` + `worker` + `common`) and `apps/frontend`; LLM prompts stay in `llm-prompts/v1/`, not `src/prompts/`. Documented in `REPO_ARCHITECTURE.md`. "apps/backend/ src/ api/ worker/ common/ schemas/ database/ helpers/ services/ prompts/" / "apps/frontend/ src/ components/ constants/ hooks/ data/ ui/ pages/ schemas/ helpers/"
+- 2026-09-18 — *backend tests:* `apps/backend/test/` sibling of `src/` (`api` / `worker` / `common`). "an important part is missing in the backend architecture, the /test folder."
+- 2026-09-18 — *bootstrap runtime:* npm workspaces + six Docker services behind `make up`; health/readiness only, no schema/bucket/queue/features. "Root npm workspaces for frontend/backend (Recommended)" / "Start apps + backing services; API/worker health checks only (Recommended)"
 <!-- /agent-reminders:decisions -->
 
 ## What I cut

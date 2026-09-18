@@ -18,7 +18,7 @@ Do not invent, polish, or expand rationales. Never write **In your own words** (
 
 ## Code organization
 
-- No starter `src/` — candidate invents layout. Prefer STACK families; production-shaped habits in `STACK.md`.
+- Scaffold exists under `apps/backend` and `apps/frontend`; add feature files within `REPO_ARCHITECTURE.md`. Prefer STACK families and production-shaped habits.
 - Raw logs: `prompts/*.jsonl`. `PROMPTS.md` auto-index is rebuilt by `scripts/index-prompts.py` (stop hook). Candidate owns **Did with it**.
 - Product calls: 1–2 reminder bullets in `DECISIONS.md` `<!-- agent-reminders:* -->` (see `.cursor/rules/challenge-build-log.mdc`). Never **In your own words**.
 
@@ -30,7 +30,7 @@ Do not invent, polish, or expand rationales. Never write **In your own words** (
 
 ## Testing
 
-- None in repo. Reviewers run the documented path. Candidate may add tests; not required for the slice.
+- `apps/backend/test/` (`api` / `worker` / `common`), sibling of `src/`; Vitest. Bootstrap has 2 Fastify inject tests. No DB/global setup yet. Reviewers still run `make up` + DECISIONS path; tests are not a substitute.
 
 ## Agent / Cursor wiring
 
