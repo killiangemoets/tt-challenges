@@ -29,9 +29,11 @@ No app install/test/lint yet — candidate adds services and documents the run p
 ## Architecture (summary)
 
 - **Today:** `docker-compose.yml` (`name: second-brain`) — `db`, `minio`, `queue` only. No app, schema, buckets, or queues.
+- **Target processes:** `ARCHITECTURE.md` — Vite React SPA → Fastify API; ingest **worker** behind ElasticMQ; MinIO; Postgres+pgvector; Anthropic from the API.
+- **Schema draft:** `DATABASE_SCHEMA.md` — one `documents` table (`source` uploaded|generated). No Prisma until remaining checkpoint 3 confirms.
 - **Corpus:** `data/` (fund + PC1 Vantage, PC2 Cascade, PC3 Ridgeline). **Customer context:** `context-brain/`.
-- **To build (STACK families):** React 18 + Vite + TanStack Query; Node HTTP (Hono preferred); Postgres+pgvector; MinIO + ElasticMQ workers (AWS SDK); Anthropic via LangChain/LangGraph-or-equivalent.
-- **Must-slice:** async ingest with visible per-doc status → cited chat → one generated doc saved to KB → dashboard. Isolation in the data model, not handler `if`s.
+- **To build (STACK):** Vite React 18 **SPA** (CSR, `react-router-dom`, Tailwind, shadcn/Radix, TanStack Query, RHF+zod, axios, lucide, prettier; TanStack Table if a table UI exists). **Fastify** + TypeScript + zod + Prisma + axios + eslint/prettier; API docs at **`/api-docs.html`**. Postgres+pgvector; MinIO + ElasticMQ (AWS SDK); Anthropic **official SDK** (`messages.stream`; no LangChain/LangGraph); embeddings **`@xenova/transformers`**. No Hono, no Next/SSR.
+- **Must-slice:** async ingest (`.md` only; MinIO + `documents`; Ingest Seeds + upload; Retry) → cited streaming chat → **portco brief** from `templates/portco-brief.md` saved as **generated** (split from uploads) → dashboard. Isolation in the data model.
 - Detail: `.cursor/memory/architecture.md`
 
 ## Verification

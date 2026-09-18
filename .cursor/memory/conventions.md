@@ -40,7 +40,8 @@ Do not invent, polish, or expand rationales. Never write **In your own words** (
 
 ## Do not
 
-- Swap stack families or add non-Anthropic SaaS.
+- Swap stack families or add non-Anthropic SaaS (no Voyage/OpenAI embeddings).
+- Use Hono, Next/SSR, LangChain / LangGraph, or a second embedder besides `@xenova/transformers`.
 - Claim facts without citations; invent corpus content.
 - Assume an existing app, schema, or queues.
 - Gold-plate one pillar while skipping others’ *must*.

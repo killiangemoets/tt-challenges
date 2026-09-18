@@ -15,12 +15,12 @@
 | Signal | amber attention; `#B3402F` failure, sparingly |
 | Type | serif headings/docs (Georgia-ish); system sans UI |
 
-- Component library: candidate’s choice (STACK). Generated output should read as **documents**, not chat bubbles.
+- Component library: **shadcn/ui + Radix** (STACK). Generated output should read as **documents**, not chat bubbles.
 
 ## Layout and navigation
 
 - Surfaces implied by spec: ingest/status, chat, generated document + trust chrome, dashboard.
-- Dashboard *must*: KB state, pipeline, what’s been generated. *Should*: morning question (“what’s new, what needs me?”) not vanity counters.
+- Dashboard: **Sam’s morning** (needs-me failed/stuck, pipeline/KB by org, generated briefs split from uploads). Ingest Seeds / Add file on this surface. Not vanity counters. Hema glance; Dana never logs in.
 - Generous whitespace, real tables; no gradients, glass, emoji in product UI.
 
 ## Interaction

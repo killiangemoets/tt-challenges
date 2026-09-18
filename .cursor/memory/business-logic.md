@@ -13,10 +13,10 @@ Source of truth for customer/product narrative: `context-brain/` (read those fil
 
 - Four pillars: ingest, converse, generate (heart), dashboard.
 - Generate use cases (pick one): candidate profile, search comparison, exec/portco brief — tied to a real decision and reader (checkpoint 1).
-- Generated doc **saved into KB** (must); re-ingest loop is *could*.
+- Generated doc **saved into KB** as a **separate kind** from uploads (DB + UI). Re-ingest loop is *could* / cut for now. Template: `templates/portco-brief.md`.
 - **Never auto hire/no-hire.** Product = judgment support + audit trail, not a verdict machine.
-- Isolation: customers’ #1 gate; provenance must be representable even if ACL is *could*.
-- Grounding invariant: every claim traces to a real passage; uncited ≠ cited; gaps stated.
+- Isolation: customers’ #1 gate; provenance must be representable even if ACL is *could*. Uploads set org via dropdown (fund / PC1 / PC2 / PC3); seeds stamp org from `data/` path.
+- Grounding invariant: every claim traces to a real passage; uncited ≠ cited; gaps stated. Chat: retrieve then generate; **stream answer tokens** (typing); **citations at end of turn**. Versioned prompts in `llm-prompts/v1/`. Send prior turns to Anthropic. Retrieve with `@xenova/transformers`. Scope: optional PC1/PC2/PC3 ∪ **fund**; no portco = fund only. No PC→PC. Enforce in SQL.
 - Talent review / IC: uneven evidence must not look uniform; flags (e.g. single independent reference) are product, not decoration.
 
 ## Workflows (JTBD)
@@ -26,7 +26,7 @@ Source of truth for customer/product narrative: `context-brain/` (read those fil
 
 ## Edge cases
 
-- Bad file: fail that document, show status, keep pipeline up.
+- Bad file: fail that document, show status, keep pipeline up. Retry re-enqueues; no DLQ. Non-`.md` rejected FE+BE. Office under `inbox/office/` not parsed.
 - Corpus silent: refuse to invent.
 - Cross-portco bleed: schema should make isolation thinkable.
 - Merge/identity of people across docs: silent failure mode if ignored.

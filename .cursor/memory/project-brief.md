@@ -16,8 +16,8 @@
 ## Non-goals
 
 - All four pillars at *could* / gold-plating the spec.
-- Swapping STACK families (Next-on-Vercel, Pinecone, Redis-as-queue).
-- External services besides Anthropic.
+- Swapping STACK families (Next/SSR, Hono, Pinecone, Redis-as-queue, LangChain/LangGraph).
+- External services besides Anthropic (no hosted embeddings).
 - Agent filling candidate-only DECISIONS fields or inventing checkpoint answers.
 
 ## Constraints

@@ -12,10 +12,10 @@ A working slice of **the Second Brain** for a fictional PE fund, DAW Capital. Th
 
 1. **Ingest** — a file pipeline that takes the fund's documents (`data/`) into a searchable knowledge base.
 2. **Converse** — a chat where a user asks questions and gets **grounded answers with citations**.
-3. **Generate** — through conversation, the brain produces a **document** (a candidate profile, a search comparison, an exec brief — your pick), grounded in the knowledge base, with useful artifacts around it — and **saves it back into the knowledge base**.
+3. **Generate** — from chat, a **portco brief** for Dana (from `templates/portco-brief.md`), grounded in the knowledge base, with trust chrome — saved as a **generated** document, not mixed with uploads.
 4. **Dashboard** — a surface that makes the system legible at a glance.
 
-The spec is deliberate about **what** and quiet about **how**. Your architecture, your schema, your agent wiring, your UX. **[STACK.md](STACK.md)** lists the technology families we work in (and the empty, pre-wired backing services you get); **[DESIGN.md](DESIGN.md)** gives light brand guidance. Inside those rails, build it your way.
+The spec is deliberate about **what**; schema and UX are yours. **[STACK.md](STACK.md)** lists the technology families and the libraries we locked (Fastify + Prisma, Vite React SPA, Anthropic official SDK, local `@xenova/transformers` — **no LangChain / LangGraph**, **no Hono**, **no Next/SSR**) plus the empty backing services; **[ARCHITECTURE.md](ARCHITECTURE.md)** is the intended process map (SPA, API, ingest worker, queue, MinIO, pgvector); **[DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)** is the draft data model; **[DESIGN.md](DESIGN.md)** gives light brand guidance. Inside those rails, build it your way.
 
 ## Before you build: understand the customer
 

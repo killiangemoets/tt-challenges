@@ -2,8 +2,7 @@
 
 ## Current focus
 
-- Pre-build: Cursor wiring + project memory init. **No product code, no checkpoint answers.**
-- Next product work: checkpoint 1 (use case / reader / decision) after `context-brain/` + SPEC — then cuts (checkpoint 2). Do not start schema/app until those calls are recorded.
+- Target topology in `ARCHITECTURE.md`. Schema **draft** in `DATABASE_SCHEMA.md`. **Locked:** one `documents` table, `source` uploaded|generated. **Open:** orgs table vs enum; citation FKs vs jsonb. No Prisma until those. Still **no app processes**.
 
 ## Recent decisions
 
@@ -11,16 +10,13 @@
 - 2026-09-18: `export-transcript.sh` accepts Cursor `conversation_id` as session id fallback.
 - 2026-09-18: `/refresh-memory` init — `AGENTS.md` operational front page; depth in `.cursor/memory/`. Existing fact preserved: follow `CLAUDE.md` and keep it in sync with the Cursor rule.
 - 2026-09-18: Auto `PROMPTS.md` index (`scripts/index-prompts.py` on stop) + `challenge-build-log.mdc` reminder bullets in `DECISIONS.md`. Candidate still types **In your own words** and **Did with it**.
+- 2026-09-18: Pillar 4 — Sam’s morning dashboard (**S**). Needs-me + pipeline/KB + generated list.
+- 2026-09-18: `STACK.md` aligned to SPEC — Fastify (not Hono), Prisma, Vite CSR kit, Anthropic official SDK, no LangChain/LangGraph, `@xenova/transformers` ingest + retrieve. `/api-docs.html`.
 
 ## Open questions (candidate — not agent-filled)
 
-- Generated document type and reader (checkpoint 1).
-- Scope cuts (2).
-- Data model / provenance (3).
-- Pipeline async + failure UX (4).
-- Grounding/citations (5).
-- Trust surface (6).
-- App run steps beyond `make up` (DECISIONS “How to run” still `# then …`).
+- Data model (checkpoint 3): `documents.source` locked. Confirm `organizations` table vs enum; `generated_citations` → chunks vs jsonb.
+- App run steps beyond `make up`.
 
 ## Known issues
 
