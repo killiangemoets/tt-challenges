@@ -13,6 +13,7 @@ import {
   StatusBadge,
 } from '@/components/ui';
 import {
+  useDashboardQuery,
   useDocumentByIdQuery,
   useDocumentLibraryQuery,
   useIngestSeedsCommand,
@@ -21,6 +22,13 @@ import {
 } from '@/hooks/data/use-second-brain';
 import { getErrorMessage } from '@/resources/api';
 import type { Citation } from '@/schemas/api';
+
+const numberedSources = (citations: Citation[]) =>
+  citations.filter(
+    (citation, index, all) =>
+      citation.marker !== undefined &&
+      all.findIndex((item) => item.marker === citation.marker) === index,
+  );
 
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat('en-GB', {
@@ -34,6 +42,7 @@ export const DocumentsPage = () => {
   const documents = useDocumentLibraryQuery();
   const setFilters = documents.setFilters;
   const detail = useDocumentByIdQuery(id);
+  const dashboard = useDashboardQuery();
   const seeds = useIngestSeedsCommand();
   const retry = useRetryDocumentCommand();
   const [query, setQuery] = useState(documents.filters.q ?? '');
@@ -48,6 +57,10 @@ export const DocumentsPage = () => {
   }, [query, setFilters]);
 
   const selected = detail.data;
+  const seedStatus = dashboard.data?.seeds;
+  const seedsIngested = Boolean(
+    seedStatus && seedStatus.ingested === seedStatus.total,
+  );
 
   return (
     <div className="page-wide">
@@ -119,11 +132,20 @@ export const DocumentsPage = () => {
         </label>
         <Button
           className="ml-auto"
-          disabled={seeds.isPending}
+          disabled={seeds.isPending || seedsIngested}
+          title={
+            seedsIngested
+              ? `All ${seedStatus?.total} seed files from data/ are already ingested.`
+              : undefined
+          }
           variant="secondary"
           onClick={() => seeds.mutate()}
         >
-          {seeds.isPending ? 'Queuing…' : 'Ingest seeds'}
+          {seedsIngested
+            ? 'Seeds ingested'
+            : seeds.isPending
+              ? 'Queuing…'
+              : 'Ingest seeds'}
         </Button>
       </header>
 
@@ -235,12 +257,19 @@ export const DocumentsPage = () => {
                 </Button>
               </div>
             )}
-            <div className="p-5">
-              <p className="eyebrow mb-3">Stored markdown</p>
-              <pre className="max-h-[32rem] overflow-auto whitespace-pre-wrap rounded-sm border bg-background p-4 font-mono text-xs leading-6">
-                {selected.markdown}
-              </pre>
-            </div>
+            {selected.filename.toLowerCase().endsWith('.md') ? (
+              <div className="p-5">
+                <p className="eyebrow mb-3">Stored markdown</p>
+                <pre className="max-h-[32rem] overflow-auto whitespace-pre-wrap rounded-sm border bg-background p-4 font-mono text-xs leading-6">
+                  {selected.markdown}
+                </pre>
+              </div>
+            ) : (
+              <Empty>
+                The original Office file is stored in MinIO. Preview is
+                unavailable until this format is supported.
+              </Empty>
+            )}
           </Card>
         )}
         {selected?.source === 'generated' && 'markdown' in selected && (
@@ -279,6 +308,33 @@ export const DocumentsPage = () => {
                 markdown={selected.markdown}
                 onCitation={setCitation}
               />
+              {numberedSources(selected.citations).length > 0 && (
+                <section className="mt-8">
+                  <h2 className="memo-h2">Sources</h2>
+                  <ol className="space-y-2">
+                    {numberedSources(selected.citations).map((item) => (
+                      <li className="flex gap-3" key={item.marker}>
+                        <button
+                          aria-label={`Open citation ${item.marker}`}
+                          className="citation mt-1 shrink-0"
+                          type="button"
+                          onClick={() => setCitation(item)}
+                        >
+                          {item.marker}
+                        </button>
+                        <div className="min-w-0 text-xs">
+                          <p className="break-all font-mono">
+                            {item.filename}
+                          </p>
+                          <p className="text-muted-foreground">
+                            {item.organization.name} · passage {item.index + 1}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              )}
               {selected.flags.length > 0 && (
                 <section className="mt-8 space-y-2">
                   <h2 className="memo-h2">Flags</h2>

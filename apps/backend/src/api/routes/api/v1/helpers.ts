@@ -1,4 +1,5 @@
 import type { FastifyReply } from 'fastify';
+import type { OutgoingHttpHeaders } from 'node:http';
 import { z } from 'zod';
 
 import {
@@ -29,7 +30,9 @@ export const stream = async (
 ) => {
   const first = await events.next();
   reply.hijack();
+  // Hijacking skips Fastify's send path, so headers set by hooks (CORS) must be written by hand.
   reply.raw.writeHead(200, {
+    ...(reply.getHeaders() as OutgoingHttpHeaders),
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     Connection: 'keep-alive',

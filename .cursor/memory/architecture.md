@@ -4,7 +4,7 @@
 
 - **Target process map:** repo-root `ARCHITECTURE.md` (ASCII topology). React SPA → Fastify API; ingest **worker** consumes ElasticMQ; MinIO objects; Postgres+pgvector; Anthropic from the API only.
 - **Code layout:** `REPO_ARCHITECTURE.md` — git monorepo, two packages: `apps/frontend` (Vite SPA), `apps/backend` (Fastify `src/api` + ElasticMQ `src/worker` + `src/common` + `test/` sibling of `src/`). No Turbo/Nx; no extra `packages/*` unless shared Zod actually hurts. LLM prompts: `llm-prompts/v1/` (not `apps/backend/src/prompts/` or repo `prompts/`).
-- Runtime today: `make up` runs six Docker services — Vite `frontend`, Fastify `api`, ingest `worker`, Postgres `db`, MinIO, ElasticMQ `queue`. API/worker deploy the Prisma migration; API initializes the `documents` bucket and `ingest` queue. All `/api/v1` routes and worker consumption are implemented.
+- Runtime today: `make up` runs Vite `frontend`, Fastify `api`, ingest `worker`, Postgres `db`, MinIO, ElasticMQ `queue`, and a one-shot `migrate` job that owns `prisma migrate deploy` + `prisma generate` before `api`/`worker` start. API initializes the `documents` bucket and `ingest` queue. All `/api/v1` routes and worker consumption are implemented.
 
 ## Key directories
 
@@ -16,7 +16,7 @@
 | `data/portcos/PC3/` | Ridgeline Freight & Logistics — `inbox/markdown/` |
 | `context-brain/` | Product/customer knowledge (not runtime config) |
 | `scripts/export-transcript.sh` | Hook: copy transcript → `prompts/raw-session-<id>.jsonl` |
-| `scripts/index-prompts.py` | Rebuild `PROMPTS.md` auto-index from those jsonl files |
+| `scripts/index-prompts.py` | Rebuild `PROMPTS.md` auto-index from `prompts/*.jsonl` and `prompts/*.json` |
 | `prompts/` | Raw **session** transcripts (reviewers) — **not** Anthropic system prompts |
 | `llm-prompts/v1/` | Versioned chat + generate system prompts |
 | `templates/portco-brief.md` | Fixed Dana memo skeleton (generate fills; headings always kept) |
@@ -25,7 +25,7 @@
 | `REPO_ARCHITECTURE.md` | `apps/frontend` + `apps/backend` (`src/api`, `src/worker`, `src/common`, `test/`) |
 | `docker-compose.yml` / `Makefile` | Complete six-service development lifecycle |
 
-Typical portco docs: VCP, scorecards, board decks, org DD, leadership assessments, interview notes, competency frameworks, 360s. **Ingest this slice:** `.md` only (BE+FE). `inbox/office/` binaries are not parsed. Seeds via **Ingest Seeds** (org from path); uploads via Add-file (file + org).
+Typical portco docs: VCP, scorecards, board decks, org DD, leadership assessments, interview notes, competency frameworks, 360s. **Parse this slice:** `.md` only (BE+FE upload restriction). **Ingest Seeds** registers `.md`, `.docx`, `.xlsx`, and `.pptx` files (org from path); Office binaries are not parsed and become visible failed rows. Uploads use Add-file (file + org).
 
 ## Implemented backend boundaries
 
@@ -38,9 +38,9 @@ Typical portco docs: VCP, scorecards, board decks, org DD, leadership assessment
 
 ## Data flow (expected)
 
-1. **Ingest Seeds** or **Add file** → **MinIO object + `documents` row** → ElasticMQ → worker: extract text → chunk → embed → insert chunks; status on the document row. Failed: UI error + Retry (no DLQ). `data/` is the seed *source*, not the runtime store.
+1. **Ingest Seeds** or **Add file** → **MinIO object + `documents` row** → ElasticMQ → worker: extract text → chunk → embed → insert chunks; status on the document row. Failed: UI error + Retry (no DLQ). `data/` is the seed *source*, not the runtime store. Ingest Seeds is idempotent (skips registered `seedPath`s) and the button disables once `GET /dashboard` reports `seeds.ingested === seeds.total`.
 2. Chat: `@xenova/transformers` query embed → retrieve `fund` always ∪ 0–3 selected portcos (empty = fund only) → Anthropic (history + passages); stream SSE API→UI; citations with `marker` after the turn; silence → “I don’t know”. Generate retrieve is still one portco ∪ fund.
-3. From chat: generate **portco brief** from `templates/portco-brief.md` → MinIO + `documents` row `source=generated` (same table; UI list split) → memo UI with citations/flags. Re-ingest into retriever is cut for now.
+3. From chat: generate **portco brief** from `templates/portco-brief.md` → MinIO + `documents` row `source=generated` (same table; UI list split) → memo UI with citations/flags. `generated_citations` stores `marker` with `section`, so the saved brief renders clickable `[n]` plus a "Sources" footnote. Re-ingest into retriever is cut for now.
 4. Dashboard (Sam): needs-me + pipeline/KB + generated list. Single-doc failure must not kill the pipeline. Non-`.md` rejected at API and UI.
 
 ## Decisions

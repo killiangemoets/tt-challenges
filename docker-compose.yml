@@ -59,6 +59,8 @@ services:
       - ./apps/backend:/workspace/apps/backend
       - backend_node_modules:/workspace/node_modules
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
       minio:
@@ -87,12 +89,30 @@ services:
       - ./apps/backend:/workspace/apps/backend
       - backend_node_modules:/workspace/node_modules
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
       minio:
         condition: service_healthy
       queue:
         condition: service_started
+
+  # Single owner of `prisma migrate deploy` + `prisma generate`: api and worker
+  # share apps/backend/node_modules, so concurrent generates race on the engine binary.
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    command: npm run db:deploy
+    environment: *backend-environment
+    volumes:
+      - ./apps/backend:/workspace/apps/backend
+      - backend_node_modules:/workspace/node_modules
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
 
   db:
     image: pgvector/pgvector:pg16

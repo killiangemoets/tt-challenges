@@ -1,6 +1,9 @@
 import type { S3Client } from '@aws-sdk/client-s3';
 import type { SQSClient } from '@aws-sdk/client-sqs';
 import type { PrismaClient } from '@prisma/client';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -32,6 +35,14 @@ const createResources = () => {
     },
     document: {
       findMany: vi.fn(async () => []),
+      findFirst: vi.fn(
+        async (query: {
+          where: { organizationId: string; seedPath: string };
+        }) => {
+          void query;
+          return { id: 'existing' };
+        },
+      ),
     },
     $queryRawUnsafe: vi.fn(async () => []),
   };
@@ -49,6 +60,37 @@ const createResources = () => {
 };
 
 describe('backend services', () => {
+  it('registers markdown and Office seed paths', async () => {
+    const { resources, db } = createResources();
+    const repoRoot = await mkdtemp(join(tmpdir(), 'second-brain-'));
+    const seedDirectory = join(repoRoot, 'data/portcos/PC1/inbox');
+    await mkdir(seedDirectory, { recursive: true });
+    await Promise.all(
+      ['source.md', 'source.docx', 'source.xlsx', 'source.pptx'].map(
+        (filename) => writeFile(join(seedDirectory, filename), 'content'),
+      ),
+    );
+    resources.repoRoot = repoRoot;
+
+    try {
+      await createBackendServices(resources).ingestSeeds();
+    } finally {
+      await rm(repoRoot, { recursive: true });
+    }
+
+    expect(db.document.findFirst).toHaveBeenCalledTimes(4);
+    expect(
+      db.document.findFirst.mock.calls.map(([query]) => query.where.seedPath),
+    ).toEqual(
+      expect.arrayContaining([
+        'data/portcos/PC1/inbox/source.docx',
+        'data/portcos/PC1/inbox/source.md',
+        'data/portcos/PC1/inbox/source.pptx',
+        'data/portcos/PC1/inbox/source.xlsx',
+      ]),
+    );
+  });
+
   it('returns organizations in slug order', async () => {
     const { resources, db } = createResources();
     const result = await createBackendServices(resources).listOrganizations();
@@ -121,6 +163,49 @@ describe('backend services', () => {
       retrieveChunks(resources, 'question', [portco.id]),
     ).rejects.toMatchObject({ statusCode: 400, code: 'bad_request' });
     expect(db.$queryRawUnsafe).not.toHaveBeenCalled();
+  });
+
+  it('maps an Anthropic rejection to failed_dependency with its reason', async () => {
+    const { resources, db } = createResources();
+    db.organization.findMany.mockResolvedValueOnce([fund]);
+    db.$queryRawUnsafe.mockResolvedValueOnce([
+      {
+        id: 'chunk-1',
+        document_id: 'doc-1',
+        organization_id: portco.id,
+        index: 0,
+        content: 'Evidence passage',
+        heading: null,
+        filename: 'source.md',
+        organization_slug: portco.slug,
+        organization_kind: portco.kind,
+        organization_name: portco.name,
+      },
+    ] as never);
+    resources.anthropic = {
+      messages: {
+        stream: () => {
+          throw {
+            status: 400,
+            error: {
+              error: { message: 'Your credit balance is too low' },
+            },
+          };
+        },
+      },
+    } as unknown as typeof resources.anthropic;
+
+    resources.repoRoot = resolve(process.cwd(), '../..');
+
+    const events = createBackendServices(resources).chat({
+      message: 'Question',
+      history: [],
+    });
+    await expect(events.next()).rejects.toMatchObject({
+      statusCode: 503,
+      code: 'failed_dependency',
+      message: 'Anthropic rejected the request: Your credit balance is too low',
+    });
   });
 
   it('rejects chat and generation when Anthropic is not configured', async () => {

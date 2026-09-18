@@ -77,6 +77,7 @@ export type DocumentDetail =
     });
 
 export type Dashboard = {
+  seeds: { total: number; ingested: number };
   needsMe: UploadedDocument[];
   pipeline: UploadedDocument[];
   generated: GeneratedDocument[];

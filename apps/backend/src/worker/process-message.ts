@@ -27,7 +27,8 @@ type IngestFailureCode =
 const messages: Record<IngestFailureCode, string> = {
   object_not_found: 'File missing from object storage.',
   empty_content: 'File is empty.',
-  unsupported_type: 'Only markdown (.md) files can be ingested.',
+  unsupported_type:
+    'This Office file cannot be parsed yet. Convert it to Markdown (.md), then upload it.',
   embed_failed: 'Embedding failed. Retry the document.',
   db_failed: 'Could not save chunks. Retry the document.',
   other: 'Ingest failed. Retry the document.',

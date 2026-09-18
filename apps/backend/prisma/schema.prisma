@@ -95,6 +95,7 @@ model GeneratedCitation {
   documentId String   @map("document_id") @db.Uuid
   chunkId    String   @map("chunk_id") @db.Uuid
   section    String
+  marker     Int?
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
   chunk      Chunk    @relation(fields: [chunkId], references: [id])

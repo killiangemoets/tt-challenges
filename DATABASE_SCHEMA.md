@@ -103,6 +103,7 @@ Structured evidence for a **generated** `documents` row. Chat citations are **no
 | `document_id` | uuid FK → documents ON DELETE CASCADE | Parent must be `source = generated`  |
 | `chunk_id`    | uuid FK → chunks                      | Real passage from an uploaded doc    |
 | `section`     | text                                  | Template heading the claim sat under |
+| `marker`      | int NULL                              | The `[n]` the claim carries in the saved markdown; NULL for rows written before markers were stored |
 | `created_at`  | timestamptz                           |                                      |
 
 ## What is intentionally absent
@@ -142,4 +143,4 @@ Locked: one `documents` table with `source = uploaded | generated`;
 key to `chunks`; `source_document_ids` as `uuid[]`; and
 `Xenova/all-MiniLM-L6-v2` embeddings as `vector(384)`.
 
-Locked with the Claude Design prototype (`claude-design/`): `chunks.heading`, `documents.size_bytes`, chat retrieve across multiple portcos, citation `marker` on the wire (not a DB column — chat cites are SSE-only).
+Locked with the Claude Design prototype (`claude-design/`): `chunks.heading`, `documents.size_bytes`, chat retrieve across multiple portcos, citation `marker` on the wire (chat cites are SSE-only; generated cites store the marker so a saved brief keeps its clickable `[n]`).

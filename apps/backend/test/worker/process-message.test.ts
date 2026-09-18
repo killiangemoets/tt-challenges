@@ -168,18 +168,29 @@ describe('processIngestMessage', () => {
     },
   );
 
-  it('rejects a non-markdown row even if the API missed it', async () => {
-    const state = createDependencies();
-    state.db.document.findUnique.mockResolvedValueOnce({
-      ...document,
-      filename: 'source.pdf',
-    });
-    expect(
-      await processIngestMessage(
-        JSON.stringify({ documentId: id }),
-        state.dependencies,
-      ),
-    ).toEqual({ outcome: 'failed', code: 'unsupported_type' });
-    expect(state.s3.send).not.toHaveBeenCalled();
-  });
+  it.each(['source.docx', 'source.xlsx', 'source.pptx'])(
+    'marks unsupported Office seed %s as failed with guidance',
+    async (filename) => {
+      const state = createDependencies();
+      state.db.document.findUnique.mockResolvedValueOnce({
+        ...document,
+        filename,
+      });
+      expect(
+        await processIngestMessage(
+          JSON.stringify({ documentId: id }),
+          state.dependencies,
+        ),
+      ).toEqual({ outcome: 'failed', code: 'unsupported_type' });
+      expect(state.db.document.update).toHaveBeenLastCalledWith({
+        where: { id },
+        data: {
+          status: 'failed',
+          errorMessage:
+            'This Office file cannot be parsed yet. Convert it to Markdown (.md), then upload it.',
+        },
+      });
+      expect(state.s3.send).not.toHaveBeenCalled();
+    },
+  );
 });

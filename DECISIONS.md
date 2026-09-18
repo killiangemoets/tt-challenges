@@ -9,8 +9,10 @@ Keep this as you go, not from memory at the end. Alongside your code and [PROMPT
 Exact steps from a clean clone. We follow these literally.
 
 ```
-cp .env.example .env
-make up
+1. Create an .env file with the `ANTHROPIC_API_KEY`env variable
+2. Run the `make up` command to start all the services
+
+Note: use `make reset` to reset everything.
 
 # Development endpoints
 # Frontend:    http://localhost:5173
@@ -25,182 +27,101 @@ make lint
 make test
 ```
 
-<!-- agent-reminders:run -->
-
-- 2026-09-18 — _backend boot:_ `cp .env.example .env && make up` deploys the Prisma migration, seeds organizations, creates the `documents` bucket and `ingest` queue, then starts the API and worker.
-- 2026-09-18 — _final pass:_ clean reset, run steps, and build log confirmed. "Yes — the log and run steps are accurate (Recommended)".
-
-<!-- /agent-reminders:run -->
-
 ## The use case I chose
 
 I chose to generate a porcto brief for Dana (Managing Partner, IC chair).
 Indeed, Dana won't really use the app, but she is the one that needs a document generated. She need a read she can trust and read in about 10 minutes before going in the Investment Committee (IC).
 She mostely needs answers to this kind of question 'Does this leadership team still support the thesis, and do we intervene?' which is more a question about a unit/team, not about one person. That's why the "porcto brief" is the perfect document to generate for her.
 
-The best, in my opinion, seems to create a template for this "porcto brief". Since she need to read it really fast, if the document is always organised the same way, it will be faster for her to read it and find the information she is looking for.
+## Decisions & trade-offs + What I cut
 
-## Decisions & trade-offs
+### 1. Ingestion pipeline
 
-One block per significant decision (the checkpoint ones at minimum — use case, cuts, data model, pipeline shape, grounding, trust surface):
+For the Pillar 1 — Ingest, I chose to only support .md files.
+Indeed, extract text from documents like .docx, .pptx, .xlsx would takes time to handle. It would require external libraries like mammoth, exceljs, etc and it would take some time do handle it cleanly.
 
-```
-### Decision: …
-- **The call:** what you chose
-- **Said at the time:** "…" (verbatim, captured by your agent from the conversation)
-- **What I gave up:** the trade-off
-- **In your own words (typed by you, not your agent):** why this was right
-```
+The document ingestion worker will do the following steps:
 
-### Decision: ingest formats + provenance UX (checkpoint 2 / 3)
+1. extract text from documents
+2. cut in chunks
+3. embed chunks
+4. insert chunks in DB
 
-- **The call:** Markdown only (enforced BE + FE). Org is first-class: seeds take org from path; uploads pick fund / PC1 / PC2 / PC3 in an Add-file modal. Isolation as provenance on the document, not full ACL.
-- **Said at the time:** "Only \".md\" files are supported for now! Check in Both BE and FE about that." / "a button \"add file\" to open a modal with a file input/dropzone + a dropdown menu to select the organisation of the file right (fund / PC1, PC2, PC3)" / "Documents belong to an org (fund vs. each portco). Keep the provenance; our customers' #1 gate is data."
-- **What I gave up:** Office parsers; inferring org from filename; hiding org from the uploader.
-- **In your own words (typed by you, not your agent):**
+Embedding: To embed (and retreive) the chunks, I chose to work with the library @xenova/transformers.
+We could maybe use a bigger tool like Voyage AI, but it seems overkilled for this project, and the only external dependency allowed is Anthropic API.
+Also, maybe using Full-Text Search (FTS) can be a possibility instead of embedding but it won't be very efficient. So a library like @xenova/transformers seemed to be the right choice here.
 
-### Decision: pipeline shape (checkpoint 4)
+Error handling: Having a DLQ didn't seem relevant to me for this small prototype.
+So here is what I did:
 
-- **The call:** Async queue. **MinIO object + `documents` row** for uploads and seeds (seeds are not “read from disk forever”). Worker: extract text → chunk → embed → insert chunks. **Ingest Seeds** for `data/`. Failed doc: visible error + Retry. No DLQ.
-- **Said at the time:** "uploaded files (and seeds when we trigger seeds ingestions) should end up in a minio bucket + a line in document table" / "Ingestion is **asynchronous** behind a queue" / "we don't need a DQL for now" / "a retry button" / "a button \"Ingest Seeds\""
-- **What I gave up:** Dead-letter queue; auto-ingest on boot with no UI; Office ingest.
-- **In your own words (typed by you, not your agent):**
+- When a document fails to be processed, it then has the state 'failed' in the DB, with the error/reason of the failure.
+- This 'failed' state of the document appears clearly for the user in the frontend with a clear error message.
+- In the frontend, we have a "Retry" button that will re-push the document in the queue for the ingestion to be retried.
 
-### Decision: embeddings
+Ranking: I skipped this point. No time for this and "reranking" is useful when we have a lot of chunks/documents. Here the app stay small so we can have good results without reranking.
 
-- **The call:** Local `@xenova/transformers` for ingest **and** query-time retrieve; vectors in pgvector. Not Voyage/OpenAI.
-- **Said at the time:** "ok yes let's use @xenova/transformers for embedding"
-- **What I gave up:** Hosted embedding quality / a second API key; Anthropic has no embeddings API.
-- **In your own words (typed by you, not your agent):**
+### 3. Converse + grounding
 
-### Decision: converse + grounding (checkpoint 5, partial)
+Since it's a very small conversational bot, it doensn't make sense to me use LangChain / LangGraph. This is more useful when building a multi agents pipeline, where the state change at each step, and it also take more time to setup. I chose to talk to the Anthropic API directly.
 
-- **The call:** Grounded cited chat; refuse when KB is silent. Multi-turn to Anthropic. Stream Anthropic SSE → API → frontend. Query embed with `@xenova/transformers`. Retrieval **B:** PC1/PC2/PC3 optional; **fund always included and shown in UI**; none selected = **fund only**. No cross-portco.
-- **Said at the time:** "B — PC1/PC2/PC3 + always include fund: UI should make it clear that fund is always included. And if none of PC1,PC2,andPC3 is selected it will be only Fund so" / "in this pillar we will also use @xenova/transformers for retrieving ofc"
-- **What I gave up:** Exclusive Fund\|PC dropdown; searching all portcos at once; a second embedding API at query time.
-- **In your own words (typed by you, not your agent):**
+I decided to handle streaming and to stream the response to the user since Anthropic API handle streaming easily with SSE, so it doesn't require a lot of effort to handle streaming.
 
-### Decision: Claude Design contract (retrieve + API/schema)
+I also decided to add a filter on proctos. Since is was already required to do data isolation by organisations/proctos, I think it makes sense to filter on what proctos' documents we want to ask a question so we are confident that the answer is accurate and using the right data.
 
-- **The call:** Bind `API_SPECS.md` and `DATABASE_SCHEMA.md` to the Claude Design prototype. Chat retrieve = fund ∪ 0–3 portcos (fund-side user). Generate still one portco ∪ fund. Adopt all prototype additions: citation `marker`, chunk `heading` + neighbor context, documents `q`, `sizeBytes`/`chunkCount`, batch `POST /documents/retry`.
-- **Said at the time:** "Yes — fund-side users need cross-portfolio questions (Recommended)" / "Adopt all additions from API_SPECS_V2 (Recommended)" / "do so"
-- **What I gave up:** The earlier “never two portcos” chat arity; a smaller API that could not drive the prototype screens.
-- **In your own words (typed by you, not your agent):**
+Since it's a small app build in a short timebox I don't handle multiple conversations at the same time, and conversations storing.
 
-### Decision: converse API (STACK AI layer)
+### 4. Document generation
 
-- **The call:** **H** — official Anthropic SDK. Retrieve → `messages.stream`. No LangChain/LangGraph. HTTP is **Fastify** (Hono reversed — see app libraries).
-- **Said at the time:** "yes I agree, fo with H"
-- **What I gave up:** LangGraph nodes/checkpoints; LangChain stream helpers. Less framework, more explicit grounding prompt.
-- **In your own words (typed by you, not your agent):**
+To stay in the timebox, I choose to generate a .md file.
 
-### Decision: app libraries (HTTP + FE kit)
+Also, the best, in my opinion, seemed to create a template for this "porcto brief". Since Dana needs to read it in 10 minutes, if the document is always organised the same way, it will be faster for her to read it and find the information she is looking for.
 
-- **The call:** Backend TypeScript **Fastify** (not Hono), zod, Prisma, axios, basic prettier + eslint, generated API docs at **`/api-docs.html`**. Frontend TypeScript React **CSR** (Vite, no Next/SSR): zod, react-hook-form, shadcn + Radix, TanStack Query, TanStack Table if needed, axios, basic prettier, Tailwind, lodash, lucide-react, react-router-dom.
-- **Said at the time:** "now for the backend, I also want to use: typescript, fastify (not Hono), zod, prisma, axios, basic config of prettier and eslint, generate an api doc at the url /api-docs.html" / "in the frontend, I want to use typescript, react, zod, react hook form, Shadcn and radix UI, TanStack Query, Tanstack Table (if needed), axios, basic config of prettier, tailwind CSS, lodash, lucide-react, react-router-dom (Everything client side rendering!)"
-- **What I gave up:** Hono; Next/SSR; a second HTTP/ORM stack.
-- **In your own words (typed by you, not your agent):**
+To make the document trustworthy. I get the citations for the file generated and store it in the database. In the frontend on the generated .md file, I display the number of citations as well as the source for each paragraph.
 
-### Decision: generate format + template (checkpoint 6)
+I chose to handle the document generation synchronously (directly in the API). It seems fine this small app in the timebox we have. But for bigger file generation, we should thinkg about make is asynchrone (behing an SQS queue).
 
-- **The call:** Portco brief as **markdown** from a **fixed template** (`templates/portco-brief.md`) so Dana always finds the same sections. Headings always present; gaps stated. Render as a memo, not chat.
-- **Said at the time:** "right" (to a checked-in section template) / "It should generate a portco brief think for Dana! From a template .md"
-- **What I gave up:** Freeform LLM essays; PDF/Word; a different shape per run.
-- **In your own words (typed by you, not your agent):**
+I skipped the bullet point "Could: The saved document is itself re-ingested — the brain can retrieve and cite it in later conversations. Full loop.". I was not able to tackle everything and in my opinion this was not the most impotant/intersting "Could" bullet point.
 
-### Decision: uploaded vs generated (data model)
+### 5. Dashboard reader
 
-- **The call:** One `documents` table with `source` = `uploaded` \| `generated`. Frontend still lists them separately. Not two tables.
-- **Said at the time:** "We sould dissociated clearly documents uploaded and documents generated (in both database and frontend)" / "I don't want \"documents\" and \"generated_documents\" to be in 2 different tables, I want only one \"documents\" table with a type/source uploaded/generated"
-- **What I gave up:** A separate `generated_documents` table; one undifferentiated UI list.
-- **In your own words (typed by you, not your agent):**
+The dashboard is designed to be Sam’s morning board (needs-me + pipeline + generated briefs). Pretty much all the actions can be done quickly from the dahsboard.
 
-### Decision: trust surface (checkpoint 6)
+### 4. App libraries
 
-- **The call:** Brief ships with citations per claim, metadata (who/what/when/from-which-sources), flags/alerts (e.g. only one independent reference), suggested next steps.
-- **Said at the time:** "The document ships with **artifacts that make it trustworthy and useful** — evidence/citations per claim, metadata (who/what/when/from-which-sources), flags or alerts (\"only one independent reference behind this section\"), suggested next steps."
-- **What I gave up:** A pretty memo with no interrogation path.
-- **In your own words (typed by you, not your agent):**
+I chose to work with Fastify on the backend, since it the framework I used the most lately. I chose the ORM Prisma bc it's very modern, easy to use. Migrations and seeds are easy to do with Prisma.
+
+I chose to add zod to have run time validation. In my opinion, it's really important to avoid bugs and handle errors nicely, especially when vibecoding.
+
+I chose to work with ShadCN, Radix UI, and TailwindCSS. It allows a great accessibility, already have a light UI and since Shadcn and allow control over components (since ShadCN is a collection, we have control on the code of the components)
+
+No SSR ofc, it not relevant here.
+
+### 4. Repository structure
+
+I place a lot of importance on having clean, readable well-structured code. I think it's especially important to keep the codebase structured these days, when we're vibecoding at a fast pace and generating a large number of lines of code.
+
+So I quickly set up (with Cursor) a small repository architecture.
+I chose to split backend and frontend. Since some services like the database should be accessible by both the api and worker but not the frontend.
+On bigger project, we could have a mono repo with a common folder (sharing schemas, types, etc) between frontend and backend. But it didn't worth it here for this very small app, in my opinion.
+
+### 4. API specs, DB schema, App Design
+
+I decided to build the database schema, the apic specs and to generate a quick Claude Design mockup (with a small iteration on this loop) before starting generating the code.
+
+First, it allowed me to make sure that everything will be build in the right direction directly, in a consistent and solid way. And so it avoids iterations afterward to improve codebase structure and quality, or to fix bugs.
+
+Then, it allowed to have the scope for the frontend and backend to be very clear and strict, and so to launch the code generation for frontend and backend both at the same time.
+
+Not much to say about the very simple database schema, except the fact that there is an `organization_id`column in both the `documents` and `chunks` table to guarantee data isolation between organisations.
 
 ### Decision: LLM prompts in git (versioned)
 
-- **The call:** Chat and generate **system prompts live in the repo with versions** (not a prompt CMS). **Not** in `prompts/` — that folder is challenge session transcripts. Path: `llm-prompts/v1/`. Document template stays `templates/portco-brief.md`.
-- **Said at the time:** "For Pillar 3 and Pillar 2, we need prompt as weel to pass to Anthropic right? Let's store it in the codebase for now with versioning."
-- **What I gave up:** Prompts only in code strings; a hosted prompt store.
-- **In your own words (typed by you, not your agent):**
-
-### Decision: stream answer tokens, cite after
-
-- **The call:** FE → API → Anthropic; SSE back API → FE; **typing effect** from token deltas. Citations as a **closing event / end of turn**, not a citation object on every token.
-- **Said at the time:** "FE make API call to BE and BE make API call to Anthropic" / "Anthropic stream the respone via SSE to API that stream the response to FE via SSE." / "in the frontend we would need a nice typing effect to write response nicely when streaming"
-- **What I gave up:** Waiting for the full JSON blob before any text; per-token structured citations.
-- **In your own words (typed by you, not your agent):**
-
-### Decision: dashboard reader (Pillar 4)
-
-- **The call:** **S** — Sam’s morning board (needs-me + pipeline + generated list). Hema glances; Dana does not log in.
-- **Said at the time:** "S"
-- **What I gave up:** Hema-only briefing queue; a partner command center; vanity counters.
-- **In your own words (typed by you, not your agent):**
-
-### Decision: repo layout
-
-- **The call:** Git monorepo with `apps/backend` (Fastify `src/api` + ingest `src/worker` + `src/common` + `test/`) and `apps/frontend` (Vite SPA). No Turbo/Nx; no extra `packages/*`. Anthropic prompts stay in `llm-prompts/v1/`, not `apps/backend/src/prompts/`. Detail: `REPO_ARCHITECTURE.md`.
-- **Said at the time:** "I was thinking something like that." / `apps/backend/` `src/` `api/` `worker/` `common/` `schemas/` `database/` `helpers/` `services/` `prompts/` / `apps/frontend/` `src/` `components/` `constants/` `hooks/` `data/` `ui/` `pages/` `schemas/` `helpers/` / "an important part is missing in the backend architecture, the /test folder."
-- **What I gave up:** Separate `apps/api` + `apps/worker` packages; a shared `packages/` workspace on day one; colocating `*.test.ts` under `src/`.
-- **In your own words (typed by you, not your agent):**
-
-### Decision: bootstrap runtime
-
-- **The call:** Root npm workspaces; Docker Compose runs frontend, API, idle worker, and all backing services. `make up` is the only startup command. Bootstrap does not create the Prisma schema, MinIO bucket, ElasticMQ queue, or product features.
-- **Said at the time:** "Root npm workspaces for frontend/backend (Recommended)" / "Start apps + backing services; API/worker health checks only (Recommended)"
-- **What I gave up:** Separate npm installs and application resource initialization during bootstrap.
-- **In your own words (typed by you, not your agent):**
-
-<!-- agent-reminders:decisions -->
-
-- 2026-09-18 — _use case:_ portco brief for Dana (~10 min, IC/board). "ok let's go with \"portco brief\"".
-- 2026-09-18 — _trust surface (Dana):_ template + citations/metadata/flags/next steps. Not Sam’s scratch draft.
-- 2026-09-18 — _ingest formats:_ markdown only, BE+FE. "Only \".md\" files are supported for now! Check in Both BE and FE about that."
-- 2026-09-18 — _pipeline:_ MinIO + `documents` row (uploads and seeds), then queue; extract → chunk → embed → insert; Retry not DLQ. "uploaded files (and seeds when we trigger seeds ingestions) should end up in a minio bucket + a line in document table"
-- 2026-09-18 — _embeddings:_ local `@xenova/transformers` for ingest **and** chat retrieve. "ok yes let's use @xenova/transformers for embedding" / "we will also use @xenova/transformers for retrieving ofc"
-- 2026-09-18 — _converse:_ grounded + citations; never invent; multi-turn to Anthropic; SSE API→FE. "YES, we should keep the context and send it to Anthropic."
-- 2026-09-18 — _retrieval scope:_ chat = fund ∪ 0–3 portcos (fund-side). Generate still one portco ∪ fund. "Yes — fund-side users need cross-portfolio questions (Recommended)" / "do so"
-- 2026-09-18 — _HTTP + worker contract:_ `API_SPECS.md` matches Claude Design — markers, batch retry, `q`, `sizeBytes`/`chunkCount`, chunk neighbors/`heading`, `portcoOrganizationIds`. "Adopt all additions from API_SPECS_V2 (Recommended)" / "do so"
-- 2026-09-18 — _data model locked:_ `organizations`; one `documents` table; `generated_citations.chunk_id` FK to `chunks`; `source_document_ids uuid[]`; `vector(384)`. "Confirm — I’ll write my reasoning in Other (Recommended)".
-- 2026-09-18 — _AI layer:_ H — Anthropic SDK only, no LangChain/LangGraph. "yes I agree, fo with H"
-- 2026-09-18 — _stack rails:_ Fastify (not Hono) + Prisma + zod; Vite React CSR (shadcn/Radix, RHF, TanStack Query, axios, Tailwind, react-router-dom); `/api-docs.html`. Anthropic SDK + `@xenova/transformers`. "fastify (not Hono)" / "Everything client side rendering!"
-- 2026-09-18 — _generate format:_ markdown from `templates/portco-brief.md` for Dana. "It should generate a portco brief think for Dana! From a template .md"
-- 2026-09-18 — _uploaded vs generated:_ one `documents` table, `source` uploaded\|generated; UI still split. "I don't want \"documents\" and \"generated_documents\" to be in 2 different tables, I want only one \"documents\" table with a type/source uploaded/generated"
-- 2026-09-18 — _trust surface:_ citations, metadata, flags, next steps. "evidence/citations per claim, metadata (who/what/when/from-which-sources), flags or alerts"
-- 2026-09-18 — _LLM prompts:_ versioned in repo (`llm-prompts/v2/chat.md` for markers; generate still `v1/portco-brief.md`), not in `prompts/` transcripts. "Let's store it in the codebase for now with versioning."
-- 2026-09-18 — _stream UX:_ Anthropic SSE → API → FE typing effect; citations at end of turn. "nice typing effect to write response nicely when streaming"
-- 2026-09-18 — _dashboard:_ Sam’s morning (**S**). "S"
-- 2026-09-18 — _process topology:_ React FE + Fastify API + ingest **worker** behind ElasticMQ + pgvector + MinIO. Documented in `ARCHITECTURE.md`. "We will have a FE in React, an API, a worker for document ingestion behind an ElasticMQ, a pgvector, a minio."
-- 2026-09-18 — _repo layout:_ one git monorepo; `apps/backend` (`api` + `worker` + `common`) and `apps/frontend`; LLM prompts stay in `llm-prompts/v1/`, not `src/prompts/`. Documented in `REPO_ARCHITECTURE.md`. "apps/backend/ src/ api/ worker/ common/ schemas/ database/ helpers/ services/ prompts/" / "apps/frontend/ src/ components/ constants/ hooks/ data/ ui/ pages/ schemas/ helpers/"
-- 2026-09-18 — _backend tests:_ `apps/backend/test/` sibling of `src/` (`api` / `worker` / `common`). "an important part is missing in the backend architecture, the /test folder."
-- 2026-09-18 — _backend runtime:_ API boot owns the MinIO bucket/queue; API and worker deploy the Prisma migration before starting. `make up` remains the entry point.
-
-<!-- /agent-reminders:decisions -->
-
-## What I cut
-
-The parts of [SPEC.md](SPEC.md) you deliberately didn't build, and why those were the right cuts for a 2–3 hour slice. Cuts recorded here are graded as product decisions; things silently missing are graded as gaps.
-
-<!-- agent-reminders:cuts -->
-
-- 2026-09-18 — _ingest:_ no Office parsers; no DLQ; no ACL enforcement. ".md" only. Retry instead of DLQ ("we don't need a DQL for now").
-- 2026-09-18 — _dashboard:_ no Hema-only queue, no heatmap, no vanity totals. Primary is Sam (**S**).
-
-<!-- /agent-reminders:cuts -->
+I chose to keep LLM prompts and the porcto brief template in git (with versioning). For this small project it's the easiest and fastest way to store it.
 
 ## If I had another day
 
-Two or three sentences: what you'd build next, harden, or test — and the first thing you'd ship.
+- One of the first things I would do is to support other document types like .docx, .pdf and .xlsx . Indeed, only supporting .md files doens't make the app useful in real life
 
-<!-- agent-reminders:another-day -->
+- I would also handle authentication. It we want to deploy the app, this point is the most important one. Then it will lead to users management and probably multi-role permissions. --> This will then enable more collaboration within the team on the platform.
 
-- 2026-09-18 — _ingest next:_ Office parsers, DLQ, org-scoped enforcement — cut for now.
-- 2026-09-18 — _AI next:_ LangGraph if generate grows real branches — not for chat.
-
-<!-- /agent-reminders:another-day -->
+- Then I would maybe also allow to export more document types, like an exec brief for example. For that, we would need to store the list of employees. When genereting an exec brief, we should then select an employee.

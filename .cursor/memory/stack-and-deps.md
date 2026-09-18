@@ -2,7 +2,8 @@
 
 ## Runtime
 
-- `make up` runs `frontend` (`:5173`), `api` (`:3000`), ingest `worker`, `db`, MinIO, and ElasticMQ. API/worker deploy Prisma migrations; API creates the `documents` bucket and `ingest` queue.
+- `make up` runs `frontend` (`:5173`), `api` (`:3000`), ingest `worker`, `db`, MinIO, and ElasticMQ, plus a one-shot `migrate` service. API creates the `documents` bucket and `ingest` queue.
+- `migrate` is the **single owner** of `prisma migrate deploy` + `prisma generate` (`npm run db:deploy`); `api`/`worker` wait on `service_completed_successfully` and only run `tsx`. They share the bind-mounted `apps/backend/node_modules`, so concurrent generates raced on renaming the query-engine binary and crashed the API.
 - Root npm workspaces + one lockfile. Node 22.18+ in app images; host Node/npm not required.
 - Backing: Docker Desktop (or compatible), ~4GB free.
 

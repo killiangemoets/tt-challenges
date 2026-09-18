@@ -4,12 +4,13 @@
   "type": "module",
   "scripts": {
     "build": "prisma generate && tsc -p tsconfig.build.json",
-    "dev:api": "prisma migrate deploy && prisma generate && tsx watch src/api/server.ts",
-    "dev:worker": "prisma migrate deploy && prisma generate && tsx watch src/worker/main.ts",
+    "db:deploy": "prisma migrate deploy && prisma generate",
+    "dev:api": "tsx watch src/api/server.ts",
+    "dev:worker": "tsx watch src/worker/main.ts",
     "format": "prettier --write .",
     "lint": "eslint .",
-    "start:api": "prisma migrate deploy && node dist/api/server.js",
-    "start:worker": "prisma migrate deploy && node dist/worker/main.js",
+    "start:api": "node dist/api/server.js",
+    "start:worker": "node dist/worker/main.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

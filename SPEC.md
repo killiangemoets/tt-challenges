@@ -8,11 +8,11 @@ DAW Capital, a lower-middle-market PE fund, generates a constant stream of peopl
 
 ## Pillar 1 — Ingest *(this slice)*
 
-A file pipeline from raw documents to a searchable knowledge base. **Markdown only** (`.md`) on both API and UI. Office binaries under `data/portcos/*/inbox/office/` are out of parser scope.
+A file pipeline from raw documents to a searchable knowledge base. **Markdown only** (`.md`) on the upload API and UI. Office binaries under `data/portcos/*/inbox/office/` are registered by **Ingest Seeds** for pipeline visibility, but remain out of parser scope and visibly fail with conversion guidance.
 
 **How it runs:** **Put object in MinIO + insert a `documents` row** (same for **Add file** and **Ingest Seeds**), then enqueue. Worker reads the object, **extracts text → chunks → embeds → inserts** chunks into Postgres+pgvector. Embeddings: **local `@xenova/transformers`** in the worker (no extra hosted API). Status **queued / processing / ready / failed** lives on that document row and is visible. A bad or unsupported file fails *that* document, not the pipeline.
 
-**How a user starts work:** **Ingest Seeds** copies each `data/` markdown file into the bucket, creates a document row (org from path), enqueues. **Add file** does the same from the modal. Failed docs show a clear error and a **Retry** (re-enqueue; no DLQ).
+**How a user starts work:** **Ingest Seeds** copies each supported corpus file (`.md`, `.docx`, `.xlsx`, `.pptx`) into the bucket, creates a document row (org from path), and enqueues it. The worker marks Office files failed because parsing is not implemented. **Add file** accepts Markdown only and follows the same storage and queue path. Failed docs show a clear error and a **Retry** (re-enqueue; no DLQ).
 
 | | This slice |
 |---|---|

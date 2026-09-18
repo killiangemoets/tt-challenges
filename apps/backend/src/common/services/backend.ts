@@ -39,10 +39,23 @@ export class AppError extends Error {
     public readonly code: AppErrorCode,
     message: string,
     public readonly details?: unknown,
+    options?: ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
   }
 }
+
+/** Anthropic rejections (billing, rate limits, outages) are dependency failures, not bugs. */
+const anthropicMessage = (error: unknown) => {
+  const detail =
+    error && typeof error === 'object' && 'error' in error
+      ? (error as { error?: { error?: { message?: unknown } } }).error?.error
+          ?.message
+      : undefined;
+  return typeof detail === 'string' && detail
+    ? `Anthropic rejected the request: ${detail}`
+    : 'Anthropic is unavailable. Try again.';
+};
 
 export type SseEvent =
   | { type: 'delta'; text: string }
@@ -170,6 +183,31 @@ const serializeDocument = async (
     ? serializeUploaded(document)
     : serializeGenerated(db, document);
 
+const SEED_EXTENSIONS = ['.md', '.docx', '.xlsx', '.pptx'];
+
+/** Repo-relative paths of the corpus files the Ingest Seeds action registers. */
+const listSeedPaths = async (repoRoot: string) => {
+  const walk = async (directory: string): Promise<string[]> => {
+    const entries = await readdir(directory, { withFileTypes: true });
+    const nested = await Promise.all(
+      entries.map((entry) =>
+        entry.isDirectory()
+          ? walk(join(directory, entry.name))
+          : Promise.resolve([join(directory, entry.name)]),
+      ),
+    );
+    return nested.flat();
+  };
+  const paths = await walk(join(repoRoot, 'data'));
+  return paths
+    .filter((path) =>
+      SEED_EXTENSIONS.some((extension) =>
+        path.toLowerCase().endsWith(extension),
+      ),
+    )
+    .map((path) => relative(repoRoot, path));
+};
+
 const getQueueUrl = async (sqs: SQSClient, queueName: string) => {
   const response = await sqs.send(
     new CreateQueueCommand({
@@ -198,7 +236,9 @@ const putAndEnqueue = async (
       Bucket: resources.bucket,
       Key: storageKey,
       Body: input.content,
-      ContentType: 'text/markdown',
+      ContentType: input.filename.toLowerCase().endsWith('.md')
+        ? 'text/markdown'
+        : 'application/octet-stream',
     }),
   );
   const document = await resources.db.document.create({
@@ -310,19 +350,29 @@ const streamAnthropic = async function* (
   system: string,
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
 ) {
-  const stream = anthropic.messages.stream({
-    model: 'claude-sonnet-4-5',
-    max_tokens: 4096,
-    system,
-    messages,
-  });
-  for await (const event of stream) {
-    if (
-      event.type === 'content_block_delta' &&
-      event.delta.type === 'text_delta'
-    ) {
-      yield event.delta.text;
+  try {
+    const stream = anthropic.messages.stream({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 4096,
+      system,
+      messages,
+    });
+    for await (const event of stream) {
+      if (
+        event.type === 'content_block_delta' &&
+        event.delta.type === 'text_delta'
+      ) {
+        yield event.delta.text;
+      }
     }
+  } catch (error) {
+    throw new AppError(
+      503,
+      'failed_dependency',
+      anthropicMessage(error),
+      undefined,
+      { cause: error },
+    );
   }
 };
 
@@ -358,7 +408,15 @@ export const createBackendServices = (
     const uploaded = documents.filter(
       (document) => document.source === DocumentSource.uploaded,
     );
+    const seedPaths = await listSeedPaths(resources.repoRoot);
+    const registered = new Set(
+      documents.map((document) => document.seedPath).filter(Boolean),
+    );
     return {
+      seeds: {
+        total: seedPaths.length,
+        ingested: seedPaths.filter((path) => registered.has(path)).length,
+      },
       needsMe: uploaded
         .filter(
           (document) =>
@@ -450,6 +508,7 @@ export const createBackendServices = (
         organization: true,
         _count: { select: { chunks: true } },
         generatedCitations: {
+          orderBy: { marker: 'asc' },
           include: {
             chunk: {
               include: { organization: true, document: true },
@@ -459,13 +518,16 @@ export const createBackendServices = (
       },
     });
     if (!document) throw new AppError(404, 'not_found', 'Document not found.');
-    const object = await resources.s3.send(
-      new GetObjectCommand({
-        Bucket: resources.bucket,
-        Key: document.storageKey,
-      }),
-    );
-    const markdown = (await object.Body?.transformToString()) ?? '';
+    const isMarkdown = document.filename.toLowerCase().endsWith('.md');
+    const object = isMarkdown
+      ? await resources.s3.send(
+          new GetObjectCommand({
+            Bucket: resources.bucket,
+            Key: document.storageKey,
+          }),
+        )
+      : undefined;
+    const markdown = (await object?.Body?.transformToString()) ?? '';
     const base = await serializeDocument(resources.db, document);
     return {
       ...base,
@@ -473,22 +535,23 @@ export const createBackendServices = (
       sizeBytes: document.sizeBytes ?? Buffer.byteLength(markdown),
       ...(document.source === DocumentSource.generated
         ? {
-            citations: document.generatedCitations.map(({ section, chunk }) =>
-              citationFrom(
-                {
-                  id: chunk.id,
-                  document_id: chunk.documentId,
-                  organization_id: chunk.organizationId,
-                  index: chunk.index,
-                  content: chunk.content,
-                  heading: chunk.heading,
-                  filename: chunk.document.filename,
-                  organization_slug: chunk.organization.slug,
-                  organization_kind: chunk.organization.kind,
-                  organization_name: chunk.organization.name,
-                },
-                { section },
-              ),
+            citations: document.generatedCitations.map(
+              ({ section, marker, chunk }) =>
+                citationFrom(
+                  {
+                    id: chunk.id,
+                    document_id: chunk.documentId,
+                    organization_id: chunk.organizationId,
+                    index: chunk.index,
+                    content: chunk.content,
+                    heading: chunk.heading,
+                    filename: chunk.document.filename,
+                    organization_slug: chunk.organization.slug,
+                    organization_kind: chunk.organization.kind,
+                    organization_name: chunk.organization.name,
+                  },
+                  { section, ...(marker === null ? {} : { marker }) },
+                ),
             ),
           }
         : {}),
@@ -557,26 +620,11 @@ export const createBackendServices = (
   },
 
   ingestSeeds: async () => {
-    const root = join(resources.repoRoot, 'data');
-    const walk = async (directory: string): Promise<string[]> => {
-      const entries = await readdir(directory, { withFileTypes: true });
-      const nested = await Promise.all(
-        entries.map((entry) =>
-          entry.isDirectory()
-            ? walk(join(directory, entry.name))
-            : Promise.resolve([join(directory, entry.name)]),
-        ),
-      );
-      return nested.flat();
-    };
-    const paths = (await walk(root)).filter(
-      (path) => path.endsWith('.md') && !path.includes('/inbox/office/'),
-    );
+    const seedPaths = await listSeedPaths(resources.repoRoot);
     const organizations = await resources.db.organization.findMany();
     const documents: unknown[] = [];
     let skipped = 0;
-    for (const path of paths) {
-      const seedPath = relative(resources.repoRoot, path);
+    for (const seedPath of seedPaths) {
       const slug = seedPath.startsWith('data/fund/')
         ? 'fund'
         : seedPath.match(/data\/portcos\/(PC[123])\//)?.[1].toLowerCase();
@@ -592,8 +640,8 @@ export const createBackendServices = (
       documents.push(
         await putAndEnqueue(resources, {
           organization,
-          filename: basename(path),
-          content: await readFile(path),
+          filename: basename(seedPath),
+          content: await readFile(join(resources.repoRoot, seedPath)),
           origin: 'seed',
           seedPath,
         }),
@@ -805,6 +853,7 @@ export const createBackendServices = (
           documentId: id,
           chunkId: chunks[marker - 1].id,
           section,
+          marker,
         })),
         skipDuplicates: true,
       });

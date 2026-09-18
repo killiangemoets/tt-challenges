@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rebuild the auto-index in PROMPTS.md from prompts/*.jsonl.
+"""Rebuild the auto-index in PROMPTS.md from prompts/*.jsonl and prompts/*.json.
 
 Preserves candidate **Did with it:** lines that are not tagged _(auto)_.
 Fail-open: callers should ignore a non-zero exit.
@@ -153,7 +153,8 @@ def main() -> int:
     manual = load_manual_did(text)
 
     items = []
-    for path in sorted(prompts_dir.glob("*.jsonl")):
+    paths = sorted({*prompts_dir.glob("*.jsonl"), *prompts_dir.glob("*.json")})
+    for path in paths:
         parsed = parse_session(path)
         if parsed:
             items.append(parsed)

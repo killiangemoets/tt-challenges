@@ -97,7 +97,7 @@ type Flag = {
   section?: string; // template heading when known
 };
 
-/** Passage used as evidence. Chat sets `marker`; generate sets `section` — mutually exclusive. */
+/** Passage used as evidence. Chat sets `marker`; generate sets `section` and `marker`. */
 type Citation = {
   chunkId: string;
   documentId: string;
@@ -105,7 +105,7 @@ type Citation = {
   organization: OrganizationRef;
   index: number; // chunk order in the file
   content: string; // exact stored passage
-  /** Chat: 1-based marker matching `[n]` in the answer text. Generate: omitted. */
+  /** 1-based marker matching `[n]` in the answer or brief text. */
   marker?: number;
   /** Generate: template heading. Chat: omitted. */
   section?: string;
@@ -264,6 +264,7 @@ Sam’s one view. Prefer this on first paint. Poll `GET /api/v1/documents` (or t
 
 ```ts
 type DashboardResponse = {
+  seeds: { total: number; ingested: number };
   needsMe: UploadedDocument[];
   pipeline: UploadedDocument[];
   generated: GeneratedDocument[];
@@ -272,6 +273,7 @@ type DashboardResponse = {
 
 | Field | SQL |
 |---|---|
+| `seeds` | `total` = ingestable `.md` under `data/`; `ingested` = those already registered (`documents.seed_path`). Drives the disabled state of **Ingest Seeds**. |
 | `needsMe` | `source = uploaded` AND (`status = failed` OR stuck). **Stuck:** `status = processing` AND `updatedAt` older than **10 minutes**. Sort: `updatedAt` desc. |
 | `pipeline` | `source = uploaded`, all statuses. Sort: `createdAt` desc. |
 | `generated` | `source = generated`. Sort: `createdAt` desc. |
@@ -389,7 +391,7 @@ Always `200` when the body validates, even if `retried` is empty. **400** on an 
 
 ### `POST /api/v1/ingest-seeds`
 
-Copies each markdown file under `data/` into MinIO, inserts a `documents` row (org from path: `data/fund/` → fund, `data/portcos/PC1|PC2|PC3/` → that portco), enqueues. **Does not** read `data/` as the retrieve store after this. Skips `inbox/office/` and non-`.md`.
+Copies each `.md`, `.docx`, `.xlsx`, and `.pptx` file under `data/` into MinIO, inserts a `documents` row (org from path: `data/fund/` → fund, `data/portcos/PC1|PC2|PC3/` → that portco), and enqueues it. **Does not** read `data/` as the retrieve store after this. The worker visibly fails Office files with `unsupported_type`; they are registered for pipeline visibility, not parsed.
 
 **Input:** empty JSON `{}` or no body.
 
@@ -503,7 +505,7 @@ Chat is **not** persisted. Citations are **not** written to `generated_citations
 
 ### `POST /api/v1/briefs/stream`
 
-From chat, for Dana. Fill `templates/portco-brief.md` (keep every heading; gaps stay visible). System prompt: `llm-prompts/v1/portco-brief.md`. Retrieve is **this one portco ∪ fund** (not the possibly-multi chat scope). Persist at end: MinIO + `documents` `source = generated`, `status = ready`, `organization_id` = **the portco** (not fund). Insert `generated_citations` (`section` = template heading; no `marker`). **Do not** create chunks for the brief. The FE asks which portco at generate time.
+From chat, for Dana. Fill `templates/portco-brief.md` (keep every heading; gaps stay visible). System prompt: `llm-prompts/v1/portco-brief.md`. Retrieve is **this one portco ∪ fund** (not the possibly-multi chat scope). Persist at end: MinIO + `documents` `source = generated`, `status = ready`, `organization_id` = **the portco** (not fund). Insert `generated_citations` (`section` = template heading; `marker` = the `[n]` the claim carries, so the saved brief stays clickable). **Do not** create chunks for the brief. The FE asks which portco at generate time.
 
 **Input JSON:**
 
@@ -539,7 +541,7 @@ Order: `delta`* → `persisted` **or** `error`. No separate citations event: the
 | UI | Calls |
 |---|---|
 | Add-file modal | `GET organizations` then `POST /documents` |
-| Ingest Seeds | `POST /ingest-seeds` then poll dashboard/documents |
+| Ingest Seeds | `POST /ingest-seeds` then poll dashboard/documents; disabled when dashboard `seeds.ingested === seeds.total` |
 | Pipeline / KB table | `GET /dashboard` or `GET /documents?source=uploaded` |
 | Needs me + Retry | dashboard `needsMe` → `POST /documents/:id/retry` or batch `POST /documents/retry` |
 | Open failed error | `errorMessage` on list, or `GET /documents/:id` |
@@ -718,7 +720,7 @@ Shown on the dashboard as-is. Keep them short and specific:
 |---|---|
 | `object_not_found` | `File missing from object storage.` |
 | `empty_content` | `File is empty.` |
-| `unsupported_type` | `Only markdown (.md) files can be ingested.` |
+| `unsupported_type` | `This Office file cannot be parsed yet. Convert it to Markdown (.md), then upload it.` |
 | `embed_failed` | `Embedding failed. Retry the document.` |
 | `db_failed` | `Could not save chunks. Retry the document.` |
 | other | `Ingest failed. Retry the document.` |

@@ -16,10 +16,10 @@ make build                    # backend + frontend production builds, in Docker
 make typecheck                # backend + frontend, in Docker
 make lint                     # backend + frontend, in Docker
 make test                     # backend Vitest, in Docker
-python3 scripts/index-prompts.py   # rebuild PROMPTS.md auto-index from prompts/*.jsonl
+python3 scripts/index-prompts.py   # rebuild PROMPTS.md auto-index from prompts/*.jsonl and prompts/*.json
 ```
 
-Node 22.18+ is encoded in the Docker images; host Node/npm is not required. Root npm workspaces + `package-lock.json`; no Turbo/Nx. `make up` is the compose entry point. API/worker deploy Prisma migrations; API creates the MinIO bucket and SQS queue.
+Node 22.18+ is encoded in the Docker images; host Node/npm is not required. Root npm workspaces + `package-lock.json`; no Turbo/Nx. `make up` is the compose entry point. A one-shot `migrate` service runs `npm run db:deploy` (`prisma migrate deploy && prisma generate`) before `api`/`worker` start — never add those to both app commands, they share `apps/backend/node_modules` and race on the engine binary. API creates the MinIO bucket and SQS queue.
 
 ## Environment
 
@@ -34,12 +34,12 @@ Node 22.18+ is encoded in the Docker images; host Node/npm is not required. Root
 
 ## Architecture (summary)
 
-- **Today:** `docker-compose.yml` (`name: second-brain`) — `frontend`, complete Fastify `api`, ingest `worker`, `db`, `minio`, `queue`. Backend routes, schema, resource initialization, ingestion, retrieval, and generation persistence are implemented.
+- **Today:** `docker-compose.yml` (`name: second-brain`) — `frontend`, complete Fastify `api`, ingest `worker`, one-shot `migrate`, `db`, `minio`, `queue`. Backend routes, schema, resource initialization, ingestion, retrieval, and generation persistence are implemented. Anthropic failures (missing key, billing, outage) return `503 failed_dependency`.
 - **Target processes:** `ARCHITECTURE.md` — Vite React SPA → Fastify API; ingest **worker** behind ElasticMQ; MinIO; Postgres+pgvector; Anthropic from the API. HTTP + worker contract: `API_SPECS.md`. **Code layout:** `REPO_ARCHITECTURE.md` — `apps/frontend` + `apps/backend` (`src/api`, `src/worker`, `src/common`, `test/`).
-- **Schema:** `DATABASE_SCHEMA.md` + `apps/backend/prisma/` — organizations, one `documents` table, chunks `vector(384)`, and generated-citation FKs. Chat retrieve = fund ∪ 0–3 portcos.
+- **Schema:** `DATABASE_SCHEMA.md` + `apps/backend/prisma/` — organizations, one `documents` table, chunks `vector(384)`, and generated-citation FKs (with the `[n]` `marker`). Chat retrieve = fund ∪ 0–3 portcos.
 - **Corpus:** `data/` (fund + PC1 Vantage, PC2 Cascade, PC3 Ridgeline). **Customer context:** `context-brain/`.
 - **To build (STACK):** Vite React 18 **SPA** (CSR, `react-router-dom`, Tailwind, shadcn/Radix, TanStack Query, RHF+zod, axios, lucide, prettier; TanStack Table if a table UI exists). **Fastify** + TypeScript + zod + Prisma + axios + eslint/prettier; API docs at **`/api-docs.html`**. Postgres+pgvector; MinIO + ElasticMQ (AWS SDK); Anthropic **official SDK** (`messages.stream`; no LangChain/LangGraph); embeddings **`@xenova/transformers`**. No Hono, no Next/SSR.
-- **Must-slice:** async ingest (`.md` only; MinIO + `documents`; Ingest Seeds + upload; Retry) → cited streaming chat (`portcoOrganizationIds`, markers) → **portco brief** from `templates/portco-brief.md` saved as **generated** (split from uploads) → dashboard. Isolation in the data model (SQL scope).
+- **Must-slice:** async ingest (Markdown parsing/uploads; Ingest Seeds also registers Office files as visible failures; MinIO + `documents`; Retry) → cited streaming chat (`portcoOrganizationIds`, markers) → **portco brief** from `templates/portco-brief.md` saved as **generated** (split from uploads) → dashboard. Isolation in the data model (SQL scope).
 - Detail: `.cursor/memory/architecture.md`
 
 ## Verification

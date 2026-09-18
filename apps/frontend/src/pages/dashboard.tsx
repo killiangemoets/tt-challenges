@@ -45,6 +45,7 @@ export const DashboardPage = () => {
 
   const data = dashboard.data!;
   const mutationError = seeds.error ?? retry.error ?? retryAll.error;
+  const seedsIngested = data.seeds.ingested === data.seeds.total;
 
   return (
     <div className="page space-y-6">
@@ -57,14 +58,24 @@ export const DashboardPage = () => {
             generated.
           </p>
         </div>
-        <Button
-          disabled={seeds.isPending}
-          variant="secondary"
-          onClick={() => seeds.mutate()}
-        >
-          <Database size={15} />
-          {seeds.isPending ? 'Queuing seeds…' : 'Ingest seeds'}
-        </Button>
+        <div className="flex flex-col items-end gap-1.5">
+          <Button
+            disabled={seeds.isPending || seedsIngested}
+            variant="secondary"
+            onClick={() => seeds.mutate()}
+          >
+            <Database size={15} />
+            {seedsIngested
+              ? 'Seeds ingested'
+              : seeds.isPending
+                ? 'Queuing seeds…'
+                : 'Ingest seeds'}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            {data.seeds.ingested} of {data.seeds.total} seed files from{' '}
+            <code>data/</code> registered
+          </p>
+        </div>
       </header>
 
       {mutationError && <ErrorState message={getErrorMessage(mutationError)} />}
