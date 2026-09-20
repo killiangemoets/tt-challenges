@@ -3,7 +3,8 @@
 ## Runtime
 
 - `make up` runs `frontend` (`:5173`), `api` (`:3000`), ingest `worker`, `db`, MinIO, and ElasticMQ, plus a one-shot `migrate` service. API creates the `documents` bucket and `ingest` queue.
-- `migrate` is the **single owner** of `prisma migrate deploy` + `prisma generate` (`npm run db:deploy`); `api`/`worker` wait on `service_completed_successfully` and only run `tsx`. They share the bind-mounted `apps/backend/node_modules`, so concurrent generates raced on renaming the query-engine binary and crashed the API.
+- `migrate` is the **single owner** of `prisma migrate deploy` + `prisma generate` (`npm run db:deploy`); `api`/`worker` wait on `service_completed_successfully` and only run `tsx`. They share `apps/backend/node_modules`, so concurrent generates raced on renaming the query-engine binary and crashed the API.
+- `migrate`/`api`/`worker` mount the shared named volume `backend_app_node_modules` at `/workspace/apps/backend/node_modules`. The lockfile keeps `prisma` and `@prisma/client` nested there (not hoisted), and the `./apps/backend` bind mount would otherwise hide them — on a clean clone `db:deploy` failed with `prisma: not found` (exit 127). The volume is seeded from the image once, so run `make reset` after changing backend dependencies.
 - Root npm workspaces + one lockfile. Node 22.18+ in app images; host Node/npm not required.
 - Backing: Docker Desktop (or compatible), ~4GB free.
 

@@ -180,4 +180,11 @@ _Latest ask:_ can you add this conv in /Users/killiangemoets/Documents/perso/tt-
 **Got:** No write access to your local disk — writing the transcript here and handing it over as a download.
 **Did with it:** _(auto)_ 8 user turn(s), 8 file-edit tool call(s). Replace this line with: took it / rejected it because … / redirected it by …
 
+<!-- source: prompts/raw-session-6e55a558-909f-40a1-bd6f-b8184053d162.jsonl -->
+
+## [Sunday, Sep 20, 2026, 10:23 AM (UTC+3)] tool: cursor
+
+**Asked:** @TEST/tt-challenges @TEST/tt-challenges/DECISIONS.md @/Users/killiangemoets/.cursor/projects/Users-killiangemoets-Documents-perso-tt-challenges/terminals/2.txt:22-210 what is wrong?
+**Got:** Applied and left uncommitted in the main repo. `git diff` there is exactly the four lines shown above, byte-identical to the version I verified in the TEST clone. I also patched `.cursor/memory/stack-and-deps.md` so the note about `migrate` owning `prisma generate` now records w…
+**Did with it:** _(auto)_ 1 user turn(s), 9 file-edit tool call(s). Replace this line with: took it / rejected it because … / redirected it by …
 <!-- auto:prompts-index:end -->
